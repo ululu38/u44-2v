@@ -33,7 +33,7 @@ export const posts = pgTable('posts', {
   title: varchar('title', { length: 255 }).notNull(),
   content: text('content').notNull(),
   tags: jsonb('tags'),
-  status: varchar('status', { length: 50 }).default('published'),
+  status: integer('status').default(1),
   views: integer('views').default(0),
 
   slug: varchar('slug', { length: 500 }).unique(),

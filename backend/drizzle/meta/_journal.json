@@ -64,6 +64,13 @@
       "when": 1779097059131,
       "tag": "0008_parallel_moondragon",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1779097285993,
+      "tag": "0009_next_maverick",
+      "breakpoints": true
     }
   ]
 }

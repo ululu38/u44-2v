@@ -19,7 +19,7 @@ interface Post {
   title: string;
   content: string;
   tags: any;
-  status: string;
+  status: number;
   views: number;
   slug?: string;
   thumbnailMediaId?: number | null;
@@ -139,6 +139,10 @@ export default function PostsPage() {
       data.thumbnailMediaId = parseInt(data.thumbnailMediaId);
     }
 
+    if (data.status) {
+      data.status = parseInt(data.status);
+    }
+
     // Add slider image IDs
     data.sliderImageIds = sliderImages.map(img => img.id);
 
@@ -232,7 +236,7 @@ export default function PostsPage() {
   if (loading && posts.length === 0) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
     if (editingPost || isCreating) {
-      const post = editingPost || { title: '', content: '', status: 'Published', tags: [] };
+      const post = editingPost || { title: '', content: '', status: 1, tags: [] };
 
 
 
@@ -443,8 +447,8 @@ export default function PostsPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-600 mb-2">Status:</label>
               <select name="status" defaultValue={post.status} className="w-full px-4 py-3 border border-gray-300 rounded focus:border-blue-500 outline-none bg-white">
-                <option value="Published">Published</option>
-                <option value="Draft">Draft</option>
+                <option value={1}>Published</option>
+                <option value={2}>Draft</option>
               </select>
             </div>
           </div>
@@ -511,8 +515,8 @@ export default function PostsPage() {
                   </div>
                 </td>
                 <td className="px-6 py-5">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${post.status === 'Published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {post.status}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${post.status === 1 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {post.status === 1 ? 'Published' : 'Draft'}
                   </span>
                 </td>
                 <td className="px-6 py-5">

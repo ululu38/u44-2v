@@ -13,8 +13,8 @@ export class CreatePostDto {
   @ApiPropertyOptional({ example: ['tech', 'news'] })
   tags?: any;
 
-  @ApiPropertyOptional({ example: 'published' })
-  status?: string;
+  @ApiPropertyOptional({ example: 1 })
+  status?: number;
 
   @ApiPropertyOptional({ example: [1, 2, 3] })
   sliderImageIds?: number[];
@@ -37,8 +37,8 @@ export class UpdatePostDto {
   @ApiPropertyOptional({ example: ['updated', 'tags'] })
   tags?: any;
 
-  @ApiPropertyOptional({ example: 'draft' })
-  status?: string;
+  @ApiPropertyOptional({ example: 2 })
+  status?: number;
 
   @ApiPropertyOptional({ example: [1, 2, 3] })
   sliderImageIds?: number[];
