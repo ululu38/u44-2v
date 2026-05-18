@@ -18,6 +18,7 @@ interface Post {
   mediaId?: number | null;
   media?: any;
   sliderImages?: any[];
+  categoryIds?: number[];
   createdAt: string;
   updatedAt: string;
 }

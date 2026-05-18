@@ -39,6 +39,7 @@ export const posts = pgTable('posts', {
 
   slug: varchar('slug', { length: 500 }).unique(),
   mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
+  categoryIds: integer('category_ids').array(),
 
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

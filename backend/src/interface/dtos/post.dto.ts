@@ -22,6 +22,9 @@ export class CreatePostDto {
   @ApiPropertyOptional({ example: [1, 2, 3] })
   sliderImageIds?: number[];
 
+  @ApiPropertyOptional({ example: [1, 2, 3] })
+  categoryIds?: number[];
+
 }
 
 export class UpdatePostDto {
@@ -45,6 +48,9 @@ export class UpdatePostDto {
 
   @ApiPropertyOptional({ example: [1, 2, 3] })
   sliderImageIds?: number[];
+
+  @ApiPropertyOptional({ example: [1, 2, 3] })
+  categoryIds?: number[];
 
 }
 
