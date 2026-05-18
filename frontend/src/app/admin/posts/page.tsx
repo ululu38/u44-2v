@@ -4,7 +4,15 @@ import React, { useState, useEffect } from "react";
 import PostEditor from "@/components/common/PostEditor";
 import MediaGallery from "@/components/common/MediaGallery";
 
-
+const CATEGORIES = [
+  { id: 1, name: 'Movement' },
+  { id: 2, name: 'Solution' },
+  { id: 3, name: 'Product' },
+  { id: 4, name: 'Project' },
+  { id: 5, name: 'Services' },
+  { id: 6, name: 'News' },
+  { id: 7, name: 'Solution News' }
+];
 
 interface Post {
   postId: number;
@@ -42,6 +50,7 @@ export default function PostsPage() {
   const [postTitle, setPostTitle] = useState('');
   const [showSliderGallery, setShowSliderGallery] = useState(false);
   const [sliderImages, setSliderImages] = useState<any[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
 
 
 
@@ -121,6 +130,7 @@ export default function PostsPage() {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data: any = Object.fromEntries(formData.entries());
+    data.categoryIds = selectedCategoryIds;
     
     // Clean up numeric fields
     if (data.thumbnailMediaId === "") {
@@ -186,6 +196,7 @@ export default function PostsPage() {
         setThumbPreview(null);
         setPostTitle('');
         setSliderImages([]);
+        setSelectedCategoryIds([]);
         
         // Load actual fields cleanly
         setEditingPost(fullPost);
@@ -197,6 +208,9 @@ export default function PostsPage() {
         }
         if (fullPost.sliderImages) {
           setSliderImages(fullPost.sliderImages.map((si: any) => si.media));
+        }
+        if (fullPost.categoryIds) {
+          setSelectedCategoryIds(fullPost.categoryIds);
         }
       }
     } catch (err) {
@@ -211,6 +225,7 @@ export default function PostsPage() {
     setThumbPreview(null);
     setPostTitle('');
     setSliderImages([]);
+    setSelectedCategoryIds([]);
     setIsCreating(true);
   };
 
@@ -398,7 +413,31 @@ export default function PostsPage() {
             <input type="hidden" id="content-input" name="content" defaultValue={post.content} />
           </div>
 
-
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <label className="block text-sm font-bold text-gray-700 mb-3">Categories:</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {CATEGORIES.map(cat => {
+                const checked = selectedCategoryIds.includes(cat.id);
+                return (
+                  <label key={cat.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer select-none transition-all ${checked ? 'bg-blue-50 border-blue-300 shadow-sm' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCategoryIds([...selectedCategoryIds, cat.id]);
+                        } else {
+                          setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== cat.id));
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className={`text-sm font-bold ${checked ? 'text-blue-800' : 'text-gray-600'}`}>{cat.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div>
@@ -456,7 +495,19 @@ export default function PostsPage() {
                       </div>
                     )}
 
-                    <span className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{post.title}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{post.title}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {post.categoryIds && post.categoryIds.map(cid => {
+                          const cat = CATEGORIES.find(c => c.id === cid);
+                          return cat ? (
+                            <span key={cid} className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-wider">
+                              {cat.name}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-5">

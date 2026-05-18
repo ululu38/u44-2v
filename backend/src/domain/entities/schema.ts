@@ -127,10 +127,3 @@ export const tickets = pgTable('tickets', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-// 8. Categories Table
-export const categories = pgTable('categories', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 255 }).unique().notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
