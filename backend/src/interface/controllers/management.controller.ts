@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard.js
 import { RolesGuard } from '../../infrastructure/auth/guards/roles.guard.js';
 import { Roles } from '../../infrastructure/auth/decorators/roles.decorator.js';
 import { DrizzleService } from '../../infrastructure/db/drizzle.service.js';
-import { partners, partnerGroups, categories } from '../../domain/entities/schema.js';
+import { partners, partnerGroups } from '../../domain/entities/schema.js';
 import { eq } from 'drizzle-orm';
 
 @ApiTags('management')
@@ -31,16 +31,4 @@ export class ManagementController {
     return this.drizzle.db.insert(partnerGroups).values(body).returning();
   }
 
-  // --- CATEGORIES (Admin Only) ---
-  @Post('categories')
-  @Roles('admin')
-  async createCategory(@Body() body: any) {
-    return this.drizzle.db.insert(categories).values(body).returning();
-  }
-
-  @Delete('categories/:id')
-  @Roles('admin')
-  async removeCategory(@Param('id') id: string) {
-    return this.drizzle.db.delete(categories).where(eq(categories.categoryId, parseInt(id))).returning();
-  }
 }

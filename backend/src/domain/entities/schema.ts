@@ -81,11 +81,6 @@ export const postImagesRelations = relations(postImages, ({ one }) => ({
 }));
 
 
-// 3. Categories Table
-export const categories = pgTable('categories', {
-  categoryId: serial('category_id').primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(),
-});
 
 // 4. Partner Groups Table
 export const partnerGroups = pgTable('partner_groups', {
@@ -106,12 +101,6 @@ export const partners = pgTable('partners', {
 });
 
 // Junction Tables
-export const postCategories = pgTable('post_categories', {
-  postId: integer('post_id').notNull().references(() => posts.postId, { onDelete: 'cascade' }),
-  categoryId: integer('category_id').notNull().references(() => categories.categoryId, { onDelete: 'cascade' }),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.postId, t.categoryId] }),
-}));
 
 export const postPartners = pgTable('post_partners', {
   postId: integer('post_id').notNull().references(() => posts.postId, { onDelete: 'cascade' }),
@@ -141,13 +130,3 @@ export const tickets = pgTable('tickets', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-// 8. Images Table (Legacy)
-export const images = pgTable('images', {
-  id: serial('id').primaryKey(),
-  urlFull: varchar('url_full', { length: 255 }).notNull(),
-  urlMedium: varchar('url_medium', { length: 255 }).notNull(),
-  pathFull: varchar('path_full', { length: 255 }).notNull(),
-  pathMedium: varchar('path_medium', { length: 255 }).notNull(),
-  placeholder: text('placeholder'),
-  createdAt: timestamp('created_at').defaultNow(),
-});

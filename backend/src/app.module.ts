@@ -12,7 +12,6 @@ import { ManagementController } from './interface/controllers/management.control
 import { TicketController } from './interface/controllers/ticket.controller.js';
 import { TicketManagementController } from './interface/controllers/ticket-management.controller.js';
 import { PostController } from './interface/controllers/post.controller.js';
-import { CategoryController } from './interface/controllers/category.controller.js';
 import { PartnerController } from './interface/controllers/partner.controller.js';
 import { MediaController } from './interface/controllers/media.controller.js';
 import { MediaService } from './infrastructure/media/media.service.js';
@@ -45,7 +44,6 @@ import { SlugService } from './infrastructure/media/slug.service.js';
     TicketController,
     TicketManagementController,
     PostController,
-    CategoryController,
     PartnerController,
     MediaController,
   ],
