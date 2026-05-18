@@ -30,7 +30,6 @@ export const media = pgTable('media', {
 // 2. Posts Table
 export const posts = pgTable('posts', {
   postId: serial('post_id').primaryKey(),
-  type: varchar('type', { length: 50 }).default('article'), 
   title: varchar('title', { length: 255 }).notNull(),
   content: text('content').notNull(),
   tags: jsonb('tags'),

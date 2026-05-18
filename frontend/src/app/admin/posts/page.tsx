@@ -8,7 +8,6 @@ import MediaGallery from "@/components/common/MediaGallery";
 
 interface Post {
   postId: number;
-  type: string;
   title: string;
   content: string;
   tags: any;
@@ -224,7 +223,7 @@ export default function PostsPage() {
   if (loading && posts.length === 0) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
     if (editingPost || isCreating) {
-      const post = editingPost || { title: '', content: '', type: 'Project', status: 'Published', tags: [] };
+      const post = editingPost || { title: '', content: '', status: 'Published', tags: [] };
 
 
 
@@ -455,7 +454,6 @@ export default function PostsPage() {
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-100">
               <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase">Content</th>
-              <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase">Category</th>
               <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase">Status</th>
               <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase text-center">Actions</th>
             </tr>
@@ -475,9 +473,6 @@ export default function PostsPage() {
 
                     <span className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{post.title}</span>
                   </div>
-                </td>
-                <td className="px-6 py-5">
-                  <span className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">{post.type}</span>
                 </td>
                 <td className="px-6 py-5">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${post.status === 'Published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>

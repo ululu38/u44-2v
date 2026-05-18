@@ -1,9 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePostDto {
-  @ApiProperty({ example: 'article' })
-  type?: string;
-
   @ApiProperty({ example: 'My First Post' })
   title: string;
 
@@ -28,9 +25,6 @@ export class CreatePostDto {
 }
 
 export class UpdatePostDto {
-  @ApiPropertyOptional({ example: 'article' })
-  type?: string;
-
   @ApiPropertyOptional({ example: 'Updated Title' })
   title?: string;
 
