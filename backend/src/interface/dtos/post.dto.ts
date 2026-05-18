@@ -13,12 +13,6 @@ export class CreatePostDto {
   @ApiPropertyOptional({ example: 1 })
   mediaId?: number;
 
-  @ApiPropertyOptional({ example: 'Description of the image' })
-  imageAlt?: string;
-
-  @ApiPropertyOptional({ example: 'Brief summary of the post...' })
-  excerpt?: string;
-
   @ApiPropertyOptional({ example: ['tech', 'news'] })
   tags?: any;
 
@@ -42,12 +36,6 @@ export class UpdatePostDto {
 
   @ApiPropertyOptional({ example: 1 })
   mediaId?: number;
-
-  @ApiPropertyOptional({ example: 'Updated description of the image' })
-  imageAlt?: string;
-
-  @ApiPropertyOptional({ example: 'Updated brief summary of the post...' })
-  excerpt?: string;
 
   @ApiPropertyOptional({ example: ['updated', 'tags'] })
   tags?: any;

@@ -33,16 +33,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const siteUrl = 'https://u44tech.com'; // แก้เป็น URL จริงของคุณ
   const imageUrl = post.media ? `${baseUrl}${post.media.urlFull}` : `${siteUrl}/default-share.jpg`;
+  
+  const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
 
   return {
     title: post.title,
-    description: post.excerpt || post.content.substring(0, 160),
+    description: cleanDesc,
     alternates: {
       canonical: `${siteUrl}/posts/${slug}`,
     },
     openGraph: {
       title: post.title,
-      description: post.excerpt || post.content.substring(0, 160),
+      description: cleanDesc,
       url: `${siteUrl}/posts/${slug}`,
       siteName: 'U44Tech',
       type: 'article',
@@ -51,13 +53,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         url: imageUrl,
         width: post.media?.width || 1200,
         height: post.media?.height || 630,
-        alt: post.imageAlt || post.title,
+        alt: post.title,
       }],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
-      description: post.excerpt || post.content.substring(0, 160),
+      description: cleanDesc,
       images: [imageUrl],
     },
   };
@@ -71,6 +73,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const siteUrl = 'https://u44tech.com';
   const imageUrl = post.media ? `${baseUrl}${post.media.urlFull}` : '';
+
+  const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
 
   // JSON-LD สำหรับ Google Rich Results
   const jsonLd = {
@@ -93,7 +97,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         url: `${siteUrl}/logo.png`,
       },
     },
-    description: post.excerpt || post.content.substring(0, 160),
+    description: cleanDesc,
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': `${siteUrl}/posts/${slug}`,

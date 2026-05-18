@@ -33,15 +33,12 @@ export const posts = pgTable('posts', {
   type: varchar('type', { length: 50 }).default('article'), 
   title: varchar('title', { length: 255 }).notNull(),
   content: text('content').notNull(),
-  thumbnailUrl: varchar('thumbnail_url', { length: 255 }), // Legacy
   tags: jsonb('tags'),
   status: varchar('status', { length: 50 }).default('published'),
   views: integer('views').default(0),
 
   slug: varchar('slug', { length: 500 }).unique(),
   mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
-  imageAlt: varchar('image_alt', { length: 255 }),
-  excerpt: varchar('excerpt', { length: 300 }),
 
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

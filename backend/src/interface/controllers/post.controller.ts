@@ -72,6 +72,9 @@ export class PostController {
       limit: l,
       offset: offset,
       orderBy: [desc(posts.createdAt)],
+      with: {
+        media: true
+      }
     });
 
     const totalCount = await this.drizzle.db.select({ value: count() }).from(posts);

@@ -11,10 +11,13 @@ interface Post {
   type: string;
   title: string;
   content: string;
-  thumbnailUrl: string;
   tags: any;
   status: string;
   views: number;
+  slug?: string;
+  mediaId?: number | null;
+  media?: any;
+  sliderImages?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -220,7 +223,7 @@ export default function PostsPage() {
   if (loading && posts.length === 0) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
     if (editingPost || isCreating) {
-      const post = editingPost || { title: '', content: '', type: 'Project', status: 'Published', thumbnailUrl: '', tags: [] };
+      const post = editingPost || { title: '', content: '', type: 'Project', status: 'Published', tags: [] };
 
 
 
@@ -291,13 +294,7 @@ export default function PostsPage() {
             </div>
 
 
-            <input 
-              type="hidden"
-              id="thumbnailUrl"
-              name="thumbnailUrl"
-              defaultValue={thumbPreview || post.thumbnailUrl}
-              key={thumbPreview || post.thumbnailUrl}
-            />
+
 
 
             <input 
@@ -467,8 +464,8 @@ export default function PostsPage() {
               <tr key={post.postId} className="hover:bg-blue-50/30 transition-colors group">
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-4">
-                    {post.thumbnailUrl ? (
-                      <img src={post.thumbnailUrl.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${post.thumbnailUrl}` : post.thumbnailUrl} alt="" className="w-12 h-12 rounded object-cover border border-gray-200" />
+                    {post.media ? (
+                      <img src={`${process.env.NEXT_PUBLIC_API_URL}${post.media.urlFull}`} alt="" className="w-12 h-12 rounded object-cover border border-gray-200" />
                     ) : (
                       <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-400">
                         <span className="material-symbols-outlined">image_not_supported</span>
