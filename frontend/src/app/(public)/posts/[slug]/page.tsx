@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const siteUrl = 'https://u44tech.com'; // แก้เป็น URL จริงของคุณ
-  const imageUrl = post.media ? `${baseUrl}${post.media.urlFull}` : `${siteUrl}/default-share.jpg`;
+  const imageUrl = post.thumbnailMedia ? `${baseUrl}${post.thumbnailMedia.urlFull}` : `${siteUrl}/default-share.jpg`;
   
   const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
 
@@ -51,8 +51,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       publishedTime: post.createdAt,
       images: [{
         url: imageUrl,
-        width: post.media?.width || 1200,
-        height: post.media?.height || 630,
+        width: post.thumbnailMedia?.width || 1200,
+        height: post.thumbnailMedia?.height || 630,
         alt: post.title,
       }],
     },
@@ -72,7 +72,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   const siteUrl = 'https://u44tech.com';
-  const imageUrl = post.media ? `${baseUrl}${post.media.urlFull}` : '';
+  const imageUrl = post.thumbnailMedia ? `${baseUrl}${post.thumbnailMedia.urlFull}` : '';
 
   const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
 

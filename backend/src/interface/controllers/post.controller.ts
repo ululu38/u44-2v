@@ -31,8 +31,8 @@ export class PostController {
     const { sliderImageIds, ...postData } = createPostDto;
     
     // Safeguard: Convert empty strings to null for numeric fields
-    if ((postData as any).mediaId === "") {
-      (postData as any).mediaId = null;
+    if ((postData as any).thumbnailMediaId === "") {
+      (postData as any).thumbnailMediaId = null;
     }
     
     const result = await this.drizzle.db.insert(posts).values(postData).returning();
@@ -73,7 +73,7 @@ export class PostController {
       offset: offset,
       orderBy: [desc(posts.createdAt)],
       with: {
-        media: true
+        thumbnailMedia: true
       }
     });
 
@@ -99,7 +99,7 @@ export class PostController {
     return this.drizzle.db.query.posts.findFirst({
       where: eq(posts.postId, id),
       with: {
-        media: true,
+        thumbnailMedia: true,
         sliderImages: {
           with: {
             media: true,
@@ -134,8 +134,8 @@ export class PostController {
     const updateData: any = { ...dtoData, updatedAt: new Date() };
     
     // Safeguard: Convert empty strings to null for numeric fields
-    if (updateData.mediaId === "") {
-      updateData.mediaId = null;
+    if (updateData.thumbnailMediaId === "") {
+      updateData.thumbnailMediaId = null;
     }
     
     // If title changes, regenerate slug

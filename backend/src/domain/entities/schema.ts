@@ -37,7 +37,7 @@ export const posts = pgTable('posts', {
   views: integer('views').default(0),
 
   slug: varchar('slug', { length: 500 }).unique(),
-  mediaId: integer('media_id').references(() => media.id, { onDelete: 'set null' }),
+  thumbnailMediaId: integer('thumbnail_media_id').references(() => media.id, { onDelete: 'set null' }),
   categoryIds: integer('category_ids').array(),
 
   createdAt: timestamp('created_at').defaultNow(),
@@ -46,8 +46,8 @@ export const posts = pgTable('posts', {
 
 // Relations
 export const postsRelations = relations(posts, ({ one, many }) => ({
-  media: one(media, {
-    fields: [posts.mediaId],
+  thumbnailMedia: one(media, {
+    fields: [posts.thumbnailMediaId],
     references: [media.id],
   }),
   sliderImages: many(postImages),

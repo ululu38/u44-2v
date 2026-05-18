@@ -14,8 +14,8 @@ interface Post {
   status: string;
   views: number;
   slug?: string;
-  mediaId?: number | null;
-  media?: any;
+  thumbnailMediaId?: number | null;
+  thumbnailMedia?: any;
   sliderImages?: any[];
   categoryIds?: number[];
   createdAt: string;
@@ -71,11 +71,7 @@ export default function PostsPage() {
   }, [currentPage]);
 
   const handleThumbSelect = (media: any) => {
-    const thumbInput = document.getElementById('thumbnailUrl') as HTMLInputElement;
-    if (thumbInput) {
-      thumbInput.value = media.urlFull;
-    }
-    const mediaIdInput = document.getElementById('mediaId') as HTMLInputElement;
+    const mediaIdInput = document.getElementById('thumbnailMediaId') as HTMLInputElement;
     if (mediaIdInput) {
       mediaIdInput.value = media.id;
     }
@@ -112,9 +108,7 @@ export default function PostsPage() {
     if (sliderImages.length > 0) {
       const firstImg = sliderImages[0];
       setThumbPreview(firstImg.urlFull);
-      const thumbInput = document.getElementById('thumbnailUrl') as HTMLInputElement;
-      if (thumbInput) thumbInput.value = firstImg.urlFull;
-      const mediaIdInput = document.getElementById('mediaId') as HTMLInputElement;
+      const mediaIdInput = document.getElementById('thumbnailMediaId') as HTMLInputElement;
       if (mediaIdInput) mediaIdInput.value = firstImg.id;
     }
   };
@@ -129,10 +123,10 @@ export default function PostsPage() {
     const data: any = Object.fromEntries(formData.entries());
     
     // Clean up numeric fields
-    if (data.mediaId === "") {
-      data.mediaId = null;
-    } else if (data.mediaId) {
-      data.mediaId = parseInt(data.mediaId);
+    if (data.thumbnailMediaId === "") {
+      data.thumbnailMediaId = null;
+    } else if (data.thumbnailMediaId) {
+      data.thumbnailMediaId = parseInt(data.thumbnailMediaId);
     }
 
     // Add slider image IDs
@@ -195,8 +189,8 @@ export default function PostsPage() {
         
         // Load actual fields cleanly
         setEditingPost(fullPost);
-        if (fullPost.thumbnailUrl) {
-          setThumbPreview(fullPost.thumbnailUrl);
+        if (fullPost.thumbnailMedia) {
+          setThumbPreview(fullPost.thumbnailMedia.urlFull);
         }
         if (fullPost.title) {
           setPostTitle(fullPost.title);
@@ -299,9 +293,9 @@ export default function PostsPage() {
 
             <input 
               type="hidden" 
-              id="mediaId" 
-              name="mediaId" 
-              defaultValue={(post as any).mediaId} 
+              id="thumbnailMediaId" 
+              name="thumbnailMediaId" 
+              defaultValue={(post as any).thumbnailMediaId || ''} 
             />
           </div>
 
@@ -356,9 +350,7 @@ export default function PostsPage() {
                       type="button"
                       onClick={() => {
                         setThumbPreview(img.urlFull);
-                        const thumbInput = document.getElementById('thumbnailUrl') as HTMLInputElement;
-                        if (thumbInput) thumbInput.value = img.urlFull;
-                        const mediaIdInput = document.getElementById('mediaId') as HTMLInputElement;
+                        const mediaIdInput = document.getElementById('thumbnailMediaId') as HTMLInputElement;
                         if (mediaIdInput) mediaIdInput.value = img.id;
                       }}
                       className="w-full bg-white/20 hover:bg-white/40 backdrop-blur-md text-white py-2 rounded-lg text-[10px] font-extrabold transition-all border border-white/30 tracking-wider shadow-xl active:scale-95"
@@ -410,13 +402,6 @@ export default function PostsPage() {
 
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">Category:</label>
-              <select name="type" defaultValue={post.type} className="w-full px-4 py-3 border border-gray-300 rounded focus:border-blue-500 outline-none bg-white">
-                <option value="Project">Project</option>
-                <option value="Article">Article</option>
-              </select>
-            </div>
-            <div>
               <label className="block text-sm font-semibold text-gray-600 mb-2">Status:</label>
               <select name="status" defaultValue={post.status} className="w-full px-4 py-3 border border-gray-300 rounded focus:border-blue-500 outline-none bg-white">
                 <option value="Published">Published</option>
@@ -463,8 +448,8 @@ export default function PostsPage() {
               <tr key={post.postId} className="hover:bg-blue-50/30 transition-colors group">
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-4">
-                    {post.media ? (
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL}${post.media.urlFull}`} alt="" className="w-12 h-12 rounded object-cover border border-gray-200" />
+                    {post.thumbnailMedia ? (
+                      <img src={`${process.env.NEXT_PUBLIC_API_URL}${post.thumbnailMedia.urlFull}`} alt="" className="w-12 h-12 rounded object-cover border border-gray-200" />
                     ) : (
                       <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-400">
                         <span className="material-symbols-outlined">image_not_supported</span>

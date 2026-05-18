@@ -8,7 +8,7 @@ export class CreatePostDto {
   content: string;
 
   @ApiPropertyOptional({ example: 1 })
-  mediaId?: number;
+  thumbnailMediaId?: number;
 
   @ApiPropertyOptional({ example: ['tech', 'news'] })
   tags?: any;
@@ -32,7 +32,7 @@ export class UpdatePostDto {
   content?: string;
 
   @ApiPropertyOptional({ example: 1 })
-  mediaId?: number;
+  thumbnailMediaId?: number;
 
   @ApiPropertyOptional({ example: ['updated', 'tags'] })
   tags?: any;
