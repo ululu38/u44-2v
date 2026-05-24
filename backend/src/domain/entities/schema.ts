@@ -32,14 +32,14 @@ export const media = pgTable('media', {
 export const posts = pgTable('posts', {
   postId: serial('post_id').primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
-  content: text('content').notNull(),
+  contentHtml: text('content_html').notNull(),
+  contentText: text('content_text').notNull(),
   tags: jsonb('tags'),
   status: integer('status').default(1),
   views: integer('views').default(0),
 
   slug: varchar('slug', { length: 500 }).unique(),
   thumbnailMediaId: integer('thumbnail_media_id').references(() => media.id, { onDelete: 'set null' }),
-  categoryIds: integer('category_ids').array(),
 
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -52,7 +52,6 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     references: [media.id],
   }),
   sliderImages: many(postImages),
-  hashtags: many(postHashtags),
   clients: many(postClients),
 }));
 
@@ -147,29 +146,7 @@ export const hashtags = pgTable('hashtags', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// 9. Post-Hashtags Junction Table
-export const postHashtags = pgTable('post_hashtags', {
-  postId: integer('post_id').notNull().references(() => posts.postId, { onDelete: 'cascade' }),
-  hashtagId: integer('hashtag_id').notNull().references(() => hashtags.id, { onDelete: 'cascade' }),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.postId, t.hashtagId] }),
-}));
 
-// Relations
-export const hashtagsRelations = relations(hashtags, ({ many }) => ({
-  posts: many(postHashtags),
-}));
-
-export const postHashtagsRelations = relations(postHashtags, ({ one }) => ({
-  post: one(posts, {
-    fields: [postHashtags.postId],
-    references: [posts.postId],
-  }),
-  hashtag: one(hashtags, {
-    fields: [postHashtags.hashtagId],
-    references: [hashtags.id],
-  }),
-}));
 
 
 // 10. Client Groups Table

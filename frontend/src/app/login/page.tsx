@@ -26,7 +26,11 @@ export default function LoginPage() {
 
       const data = await response.json();
       localStorage.setItem('user', JSON.stringify(data.user));
-      window.location.href = "/admin/users";
+      if (data.user?.role === 'admin') {
+        window.location.href = "/admin/users";
+      } else {
+        window.location.href = "/admin/posts";
+      }
     } catch (err) {
       alert('Invalid username or password');
     }

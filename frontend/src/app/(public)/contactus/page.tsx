@@ -1,8 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect } from "react";
 
 export default function ContactUs() {
+  useEffect(() => {
+    document.title = "U44 Technology Solutions | Contact Us";
+  }, []);
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 pt-0">
       {/* Hero Section */}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import PostsSearchUI from "@/components/PostsSearchUI";
 
@@ -8,9 +8,13 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
 
+  useEffect(() => {
+    document.title = q ? `U44 Technology Solutions | Search: ${q}` : "U44 Technology Solutions | Search";
+  }, [q]);
+
   return (
     <PostsSearchUI 
-      initialCategoryId={null} 
+      initialTag={null} 
       initialKeyword={q}
       title="ผลการค้นหา (Search Results)"
       description={q ? `กำลังแสดงผลการค้นหาสำหรับ "${q}"` : "พิมพ์ค้นหาข่าวสาร บทความ หรือโครงการได้ที่นี่"}

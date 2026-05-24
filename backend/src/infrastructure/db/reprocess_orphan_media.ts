@@ -81,9 +81,9 @@ async function main() {
     filename: string;
     post_id:  number | null;
     title:    string | null;
-    content:  string | null;
+    content_html:  string | null;
   }>(`
-    SELECT m.id AS media_id, m.filename, p.post_id, p.title, p.content
+    SELECT m.id AS media_id, m.filename, p.post_id, p.title, p.content_html AS content_html
     FROM media m
     LEFT JOIN posts p ON p.thumbnail_media_id = m.id
     WHERE m.blur_hash = '' OR m.blur_hash IS NULL OR length(m.blur_hash) < 20
@@ -101,8 +101,8 @@ async function main() {
     let sourceDesc = '';
 
     // Strategy 1: first existing image from post content HTML
-    if (row.content) {
-      const srcs = extractUploadSrcs(row.content);
+    if (row.content_html) {
+      const srcs = extractUploadSrcs(row.content_html);
       for (const src of srcs) {
         const p = await resolveUploadPath(src);
         if (p) { sourcePath = p; sourceDesc = `content img ${src}`; break; }

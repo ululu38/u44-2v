@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-const PROJECT_CATEGORY_ID = 3;
+const PROJECT_TAG = "Project";
 
 const PROJECT_TABS = [
   { icon: "apps",            label: "" },
@@ -44,20 +44,23 @@ function ProjectCardRow({ post }: { post: Post }) {
   return (
     <Link
       href={`/posts/${post.slug || post.postId}`}
-      className="w-full block group"
+      className="w-full block group relative rounded-xl transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-blue-900/30 bg-[#1a1b22]"
+      style={{ transform: "translateZ(0)", willChange: "transform" }}
     >
-      <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-blue-900/30 transition-all duration-300 hover:-translate-y-1 bg-[#1a1b22] border border-white/5 group-hover:border-blue-500/30">
+      <div 
+        className="rounded-[inherit] overflow-hidden border border-white/5 group-hover:border-blue-500/30 relative"
+      >
         {/* Thumbnail */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-[#111]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#111] rounded-t-[inherit]">
           {thumb ? (
             <img
               src={thumb}
               alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-t-[inherit]"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-blue-300/30">
+            <div className="w-full h-full flex items-center justify-center text-blue-300/30 rounded-t-[inherit]">
               <span className="material-icons text-5xl">image</span>
             </div>
           )}
@@ -101,8 +104,9 @@ export default function ProjectPage() {
 
   // ── Build sidebar from posts ─────────────────────────────────────────
   useEffect(() => {
+    document.title = "U44 Technology Solutions | Projects";
     // fetch ALL posts once to build sidebar counters (limit=200 should be enough)
-    fetch(`${API}/posts?page=1&limit=200&categoryId=${PROJECT_CATEGORY_ID}`)
+    fetch(`${API}/posts?page=1&limit=200&tag=${PROJECT_TAG}&status=1`)
       .then(r => r.json())
       .then(d => {
         const data: Post[] = d.data || [];
@@ -140,7 +144,7 @@ export default function ProjectPage() {
   const fetchPosts = useCallback(async (tab: string, pageNum: number) => {
     setLoading(true);
     try {
-      const url = `${API}/posts?page=${pageNum}&limit=20&categoryId=${PROJECT_CATEGORY_ID}${tab ? `&q=${encodeURIComponent(tab)}` : ""}`;
+      const url = `${API}/posts?page=${pageNum}&limit=20&tag=${PROJECT_TAG}${tab ? `&q=${encodeURIComponent(tab)}` : ""}&status=1`;
       const r = await fetch(url);
       const d = await r.json();
       const newPosts: Post[] = d.data || [];
@@ -391,3 +395,4 @@ export default function ProjectPage() {
     </div>
   );
 }
+// End of file

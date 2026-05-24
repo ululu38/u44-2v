@@ -32,7 +32,6 @@ interface Post {
   thumbnailMediaId?: number | null;
   thumbnailMedia?: any;
   sliderImages?: any[];
-  categoryIds?: number[];
   clientIds?: number[];
   clients?: Client[];
   createdAt: string;
@@ -91,10 +90,22 @@ export default function PostsPage() {
 
 
 
+  // Filters State
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterTag, setFilterTag] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterClient, setFilterClient] = useState("all");
+
   const fetchPosts = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts?page=${page}&limit=10`, {
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/posts?page=${page}&limit=10`;
+      if (filterKeyword) url += `&q=${encodeURIComponent(filterKeyword)}`;
+      if (filterTag && filterTag !== "all") url += `&tag=${encodeURIComponent(filterTag)}`;
+      if (filterStatus && filterStatus !== "all") url += `&status=${filterStatus}`;
+      if (filterClient && filterClient !== "all") url += `&clientId=${filterClient}`;
+
+      const response = await fetch(url, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -110,9 +121,21 @@ export default function PostsPage() {
     }
   };
 
+  // Unified effect to trigger fetch on page or filter changes (with keyword debounce)
   useEffect(() => {
-    fetchPosts(currentPage);
-  }, [currentPage]);
+    const timer = setTimeout(() => {
+      fetchPosts(currentPage);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [currentPage, filterKeyword, filterTag, filterStatus, filterClient]);
+
+  const handleFilterChange = (type: string, value: string) => {
+    setCurrentPage(1);
+    if (type === 'keyword') setFilterKeyword(value);
+    if (type === 'tag') setFilterTag(value);
+    if (type === 'status') setFilterStatus(value);
+    if (type === 'client') setFilterClient(value);
+  };
 
   const handleThumbSelect = (media: any) => {
     setThumbnailMediaId(media.id);
@@ -161,7 +184,6 @@ export default function PostsPage() {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data: any = Object.fromEntries(formData.entries());
-    data.categoryIds = selectedCategoryIds;
     
     // Clean up numeric fields
     if (data.thumbnailMediaId === "") {
@@ -476,33 +498,7 @@ export default function PostsPage() {
             />
             <input type="hidden" id="content-input" name="content" defaultValue={post.content} />
           </div>
-
-          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-            <label className="block text-sm font-bold text-gray-700 mb-3">Categories:</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {CATEGORIES.map(cat => {
-                const checked = selectedCategoryIds.includes(cat.id);
-                return (
-                  <label key={cat.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer select-none transition-all ${checked ? 'bg-blue-50 border-blue-300 shadow-sm' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedCategoryIds([...selectedCategoryIds, cat.id]);
-                        } else {
-                          setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== cat.id));
-                        }
-                      }}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className={`text-sm font-bold ${checked ? 'text-blue-800' : 'text-gray-600'}`}>{cat.name}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
+          
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <label className="block text-sm font-bold text-gray-700 mb-3">Hashtags:</label>
             <HashtagsInput value={selectedTags} onChange={setSelectedTags} />
@@ -580,7 +576,7 @@ export default function PostsPage() {
               <label className="block text-sm font-semibold text-gray-600 mb-2">Status:</label>
               <select name="status" defaultValue={post.status} className="w-full px-4 py-3 border border-gray-300 rounded focus:border-blue-500 outline-none bg-white">
                 <option value={1}>Published</option>
-                <option value={2}>Draft</option>
+                <option value={0}>Draft</option>
               </select>
             </div>
           </div>
@@ -607,6 +603,76 @@ export default function PostsPage() {
           <span className="material-icons">add</span>
           New Post
         </button>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 sm:grid-cols-4 gap-4">
+        {/* Search Keyword */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Search Keyword</label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search title, content..."
+              value={filterKeyword}
+              onChange={(e) => handleFilterChange('keyword', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-sm text-gray-700 bg-white"
+            />
+            {filterKeyword && (
+              <button
+                type="button"
+                onClick={() => handleFilterChange('keyword', '')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category (Tag) Filter */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category (Tag)</label>
+          <select
+            value={filterTag}
+            onChange={(e) => handleFilterChange('tag', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-sm text-gray-700 bg-white"
+          >
+            <option value="all">All Categories</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status Filter */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Status</label>
+          <select
+            value={filterStatus}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-sm text-gray-700 bg-white"
+          >
+            <option value="all">All Statuses</option>
+            <option value="1">Published</option>
+            <option value="0">Draft</option>
+          </select>
+        </div>
+
+        {/* Client Filter */}
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Client</label>
+          <select
+            value={filterClient}
+            onChange={(e) => handleFilterChange('client', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:border-blue-500 outline-none text-sm text-gray-700 bg-white"
+          >
+            <option value="all">All Clients</option>
+            {clients.map((c) => (
+              <option key={c.clientId} value={c.clientId.toString()}>{c.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -640,10 +706,10 @@ export default function PostsPage() {
                             {client.name}
                           </span>
                         ))}
-                        {post.categoryIds && post.categoryIds.map(cid => {
-                          const cat = CATEGORIES.find(c => c.id === cid);
+                        {post.tags && (post.tags as string[]).map((tagName: string) => {
+                          const cat = CATEGORIES.find(c => c.name.toLowerCase() === tagName.toLowerCase());
                           return cat ? (
-                            <span key={cid} className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-wider">
+                            <span key={tagName} className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-wider">
                               {cat.name}
                             </span>
                           ) : null;

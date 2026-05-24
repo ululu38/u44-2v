@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Sqids from 'sqids';
 import OptimizedImage from '@/components/common/OptimizedImage';
 import ImageSlider from '@/components/common/ImageSlider';
@@ -16,10 +17,18 @@ async function getPost(slug: string) {
   const ids = sqids.decode(encodedId);
   if (ids.length === 0) return null;
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/${ids[0]}`, {
-    cache: 'no-store'
-  });
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access_token')?.value;
 
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Cookie'] = `access_token=${token}`;
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/${ids[0]}`, {
+    cache: 'no-store',
+    headers
+  });
 
   if (!res.ok) return null;
   return res.json();

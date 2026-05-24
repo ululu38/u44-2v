@@ -47,7 +47,10 @@ export class PartnerController {
     const totalCount = await this.drizzle.db.select({ value: count() }).from(partners);
 
     return {
-      data,
+      data: data.map(partner => ({
+        ...partner,
+        logoMedia: partner.logoMedia ? transformMedia(partner.logoMedia) : null,
+      })),
       meta: {
         total: totalCount[0].value,
         page: p,

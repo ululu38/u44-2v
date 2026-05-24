@@ -14,7 +14,7 @@ export default function NewsPage() {
         You can adjust this ID based on your database configuration.
       */}
       <PostsSearchUI 
-        initialCategoryId={1} 
+        initialTag="News" 
         title="News & Updates"
         description="ติดตามข่าวสาร กิจกรรม และความเคลื่อนไหวล่าสุดจากพวกเรา"
       />

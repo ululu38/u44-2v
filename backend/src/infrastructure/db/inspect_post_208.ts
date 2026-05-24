@@ -14,7 +14,7 @@ async function inspectPost208() {
   if (post) {
     console.log(`Post ID: ${post.postId} | Title: ${post.title}`);
     console.log('Content:');
-    console.log(post.content);
+    console.log(post.contentHtml);
   } else {
     console.log('Post 208 not found.');
   }

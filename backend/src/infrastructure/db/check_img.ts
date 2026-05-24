@@ -8,10 +8,10 @@ async function checkImg() {
   
   const allPosts = await db.query.posts.findMany();
   for (const post of allPosts) {
-     if (!post.content) continue;
+     if (!post.contentHtml) continue;
      const regex = /<img[^>]+src="([^">]+)"/g;
      let match;
-     while ((match = regex.exec(post.content)) !== null) {
+     while ((match = regex.exec(post.contentHtml)) !== null) {
        console.log(`Post ID: ${post.postId}, src: ${match[1]}`);
      }
   }

@@ -10,7 +10,7 @@ export default function MovementPage() {
   return (
     <div className="bg-black min-h-screen">
       <PostsSearchUI 
-        initialCategoryId={6} 
+        initialTag="Movement" 
         title="Movement & Activities"
         description="ติดตามความเคลื่อนไหว กิจกรรม และโครงการต่างๆ ของเรา"
       />

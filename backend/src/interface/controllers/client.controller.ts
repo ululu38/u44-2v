@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard.js
 import { RolesGuard } from '../../infrastructure/auth/guards/roles.guard.js';
 import { Roles } from '../../infrastructure/auth/decorators/roles.decorator.js';
 import { CreateClientDto, UpdateClientDto } from '../dtos/client.dto.js';
+import { transformMedia } from '../../infrastructure/media/media.service.js';
 
 @ApiTags('clients')
 @Controller('clients')
@@ -87,7 +88,10 @@ export class ClientController {
     const totalCount = await totalCountQuery;
 
     return {
-      data,
+      data: data.map(client => ({
+        ...client,
+        logoMedia: client.logoMedia ? transformMedia(client.logoMedia) : null,
+      })),
       meta: {
         total: totalCount[0].value,
         page: p,

@@ -35,7 +35,7 @@ interface PostHit {
 }
 
 interface PostsSearchUIProps {
-  initialCategoryId?: number | null;
+  initialTag?: string | null;
   initialKeyword?: string;
   title?: string;
   description?: string;
@@ -43,7 +43,7 @@ interface PostsSearchUIProps {
 }
 
 export default function PostsSearchUI({
-  initialCategoryId = null,
+  initialTag = null,
   initialKeyword = "",
   title = "ข่าวสารและบทความ",
   description = "ติดตามข่าวสาร อัปเดตเทคโนโลยี และความรู้ใหม่ๆ จาก U44Tech",
@@ -51,7 +51,7 @@ export default function PostsSearchUI({
 }: PostsSearchUIProps) {
   const [posts, setPosts] = useState<PostHit[]>([]);
   const [keyword, setKeyword] = useState(initialKeyword);
-  const [categoryId, setCategoryId] = useState<number | null>(initialCategoryId);
+  const [tag, setTag] = useState<string | null>(initialTag);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
@@ -92,19 +92,19 @@ export default function PostsSearchUI({
   }, [initialKeyword]);
 
   useEffect(() => {
-    setCategoryId(initialCategoryId);
+    setTag(initialTag);
     setPosts([]);
     setPage(1);
-  }, [initialCategoryId]);
+  }, [initialTag]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       setIsSearching(true);
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        let url = `${apiUrl}/posts?page=${page}&limit=${itemsPerPage}`;
+        let url = `${apiUrl}/posts?page=${page}&limit=${itemsPerPage}&status=1`;
         if (keyword) url += `&q=${encodeURIComponent(keyword)}`;
-        if (categoryId !== null && categoryId.toString() !== 'all') url += `&categoryId=${categoryId}`;
+        if (tag !== null && tag !== 'all') url += `&tag=${encodeURIComponent(tag)}`;
 
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch posts');
@@ -141,7 +141,7 @@ export default function PostsSearchUI({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [keyword, categoryId, page]);
+  }, [keyword, tag, page]);
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl">
@@ -183,20 +183,20 @@ export default function PostsSearchUI({
           </div>
 
           <select
-            value={categoryId === null ? "all" : categoryId.toString()}
+            value={tag === null ? "all" : tag}
             onChange={(e) => {
               const val = e.target.value;
               setPosts([]);
-              setCategoryId(val === "all" ? null : Number(val));
+              setTag(val === "all" ? null : val);
               setPage(1);
             }}
             className="bg-[#151517] border border-white/10 text-white rounded-lg px-5 py-3 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer min-w-[200px]"
           >
             <option value="all">ทั้งหมด (All)</option>
-            <option value="1">News (ข่าวสาร)</option>
-            <option value="2">Solution (โซลูชัน)</option>
-            <option value="3">Project (โครงการ)</option>
-            <option value="6">Movement (ความเคลื่อนไหว)</option>
+            <option value="News">News (ข่าวสาร)</option>
+            <option value="Solution">Solution (โซลูชัน)</option>
+            <option value="Project">Project (โครงการ)</option>
+            <option value="Movement">Movement (ความเคลื่อนไหว)</option>
           </select>
         </div>
       )}
@@ -225,45 +225,46 @@ export default function PostsSearchUI({
             <Link 
               href={`/posts/${post.slug || post.id}`} 
               key={post.id}
-              className="block aspect-[3/2] group"
+              className="block aspect-[3/2] group relative rounded-md overflow-hidden border-1 border-gray-600 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)] bg-[#151517]"
+              style={{ transform: "translateZ(0)", willChange: "transform" }}
             >
-              <div className="relative w-full h-full rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-end">
+              <div className="w-full h-full flex flex-col justify-end relative">
                 {/* Full Image */}
                 {post.thumbnailUrl ? (
                   <img
                     src={getImageUrl(post.thumbnailUrl)}
                     alt={post.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-gray-500">
+                  <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-gray-500">
                     <span className="material-icons text-4xl">image</span>
                   </div>
                 )}
 
                 {/* Black Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                <div className="absolute -inset-[2px] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
                 {/* Content Overlay */}
                 <div className="relative px-3 pb-2.5 pt-6 flex flex-col z-10">
                   {/* Category and Date row */}
                   <div className="flex items-center gap-2 mb-1">
-                    {post.categoryIds && post.categoryIds.includes(1) && (
+                    {post.tags && post.tags.includes("News") && (
                       <span className="text-[9px] bg-blue-600/90 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                         News
                       </span>
                     )}
-                    {post.categoryIds && post.categoryIds.includes(2) && (
+                    {post.tags && post.tags.includes("Solution") && (
                       <span className="text-[9px] bg-indigo-600/90 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                         Solution
                       </span>
                     )}
-                    {post.categoryIds && post.categoryIds.includes(3) && (
+                    {post.tags && post.tags.includes("Project") && (
                       <span className="text-[9px] bg-amber-600/90 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                         Project
                       </span>
                     )}
-                    {post.categoryIds && post.categoryIds.includes(6) && (
+                    {post.tags && post.tags.includes("Movement") && (
                       <span className="text-[9px] bg-emerald-600/90 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
                         Movement
                       </span>
@@ -326,3 +327,4 @@ export default function PostsSearchUI({
     </div>
   );
 }
+// End of PostsSearchUI

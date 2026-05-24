@@ -54,8 +54,8 @@ async function fixMedia() {
   // Also fix HTML content in posts just in case they have ../../images
   const allPosts = await db.query.posts.findMany();
   for (const post of allPosts) {
-    if (!post.content) continue;
-    let newContent = post.content;
+    if (!post.contentHtml) continue;
+    let newContent = post.contentHtml;
     let changed = false;
 
     if (newContent.includes('../../images/')) {

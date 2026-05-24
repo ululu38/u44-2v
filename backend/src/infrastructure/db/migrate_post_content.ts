@@ -521,9 +521,9 @@ async function migratePostContent() {
   logContent += `================================================================================\n\n`;
 
   for (const post of allPosts) {
-    if (!post.content) continue;
+    if (!post.contentHtml) continue;
 
-    const originalContent = post.content;
+    const originalContent = post.contentHtml;
     const cleanedContent = cleanPostHTML(originalContent);
 
     // Standardize newline formatting in comparison
@@ -542,7 +542,7 @@ async function migratePostContent() {
 
       if (writeMode) {
         await db.update(schema.posts)
-          .set({ content: cleanedContent, updatedAt: new Date() })
+          .set({ contentHtml: cleanedContent, updatedAt: new Date() })
           .where(eq(schema.posts.postId, post.postId));
       }
     }

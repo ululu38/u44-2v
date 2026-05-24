@@ -114,8 +114,8 @@ async function migrate() {
   console.log("Updating post content HTML...");
   const allPosts = await db.query.posts.findMany();
   for (const post of allPosts) {
-    if (!post.content) continue;
-    let newContent = post.content;
+    if (!post.contentHtml) continue;
+    let newContent = post.contentHtml;
     let changed = false;
 
     for (const [oldUrl, newFullUrl] of Object.entries(urlMap)) {
@@ -126,7 +126,7 @@ async function migrate() {
     }
 
     if (changed) {
-      await db.update(schema.posts).set({ content: newContent }).where(eq(schema.posts.postId, post.postId));
+      await db.update(schema.posts).set({ contentHtml: newContent }).where(eq(schema.posts.postId, post.postId));
       console.log(`Updated HTML content for post ID: ${post.postId}`);
     }
   }

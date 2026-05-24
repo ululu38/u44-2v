@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-const SOLUTION_CATEGORY_ID = 2;
+const SOLUTION_TAG = "Solution";
 
 const SOLUTION_TABS = [
   { icon: "code",              label: "Software Development" },
@@ -27,6 +27,7 @@ interface Post {
   title: string;
   slug: string;
   content: string;
+  contentText?: string;
   tags: string[] | null;
   thumbnailMedia?: { urlThumb?: string; urlFull?: string; urlMini?: string } | null;
   clients?: { clientId: number; name: string }[];
@@ -116,25 +117,26 @@ function HeroSwiper({ posts }: { posts: Post[] }) {
               <Link
                 key={post.postId}
                 href={`/posts/${post.slug || post.postId}`}
-                className="flex-none w-full sm:w-[calc(50%-10px)] md:w-[calc(33.33%-14px)] lg:w-[calc(25%-15px)] aspect-[3/2] group"
+                className="flex-none w-full sm:w-[calc(50%-10px)] md:w-[calc(33.33%-14px)] lg:w-[calc(25%-15px)] aspect-[3/2] group relative rounded-md overflow-hidden border-1 border-gray-600 transition-all duration-300 hover:-translate-y-1 shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.15)] bg-[#151517]"
+                style={{ transform: "translateZ(0)", willChange: "transform" }}
               >
-                <div className="relative w-full h-full rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)] transition-all duration-300 hover:-translate-y-1 flex flex-col justify-end">
+                <div className="w-full h-full flex flex-col justify-end relative">
                   {thumb ? (
-                    <img src={thumb} alt={post.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={thumb} alt={post.title} className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
-                    <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-300">
+                    <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-300">
                       <span className="material-icons text-4xl">image</span>
                     </div>
                   )}
                   {/* Tighter Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                  <div className="absolute -inset-[2px] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                   {/* Content Overlay */}
                   <div className="relative px-3 pb-2.5 pt-6 flex flex-col z-10">
                     <h4 className="font-heading font-semibold text-xs sm:text-sm text-white line-clamp-1 mb-1 tracking-wide">
                       {post.title}
                     </h4>
                     <p className="text-[11px] text-gray-400 line-clamp-1 leading-relaxed mb-2">
-                      {post.content?.replace(/<[^>]*>/g, "").slice(0, 100)}...
+                      {post.contentText ? post.contentText.slice(0, 100) : post.content?.replace(/<[^>]*>/g, "").slice(0, 100)}...
                     </p>
                     <div className="flex items-center justify-between mt-auto">
                       <span className="text-[10px] text-gray-400 font-medium">
@@ -173,24 +175,28 @@ function SolutionCard({ post }: { post: Post }) {
   const thumb = imgUrl(post.thumbnailMedia?.urlThumb || post.thumbnailMedia?.urlFull);
 
   return (
-    <Link href={`/posts/${post.slug || post.postId}`} className="block aspect-[3/2] group">
-      <div className="relative w-full h-full rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)] transition-all duration-300 hover:-translate-y-1 flex flex-col justify-end">
+    <Link 
+      href={`/posts/${post.slug || post.postId}`} 
+      className="block aspect-[3/2] group relative rounded-md overflow-hidden border-1 border-gray-600 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.15)] bg-[#151517]"
+      style={{ transform: "translateZ(0)", willChange: "transform" }}
+    >
+      <div className="w-full h-full flex flex-col justify-end relative">
         {/* Full Image */}
         {thumb ? (
           <img 
             src={thumb} 
             alt={post.title} 
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500" 
             loading="lazy" 
           />
         ) : (
-          <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-400">
+          <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-400">
             <span className="material-icons text-5xl">image</span>
           </div>
         )}
 
         {/* Black Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        <div className="absolute -inset-[2px] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
         {/* Content overlaid at the bottom */}
         <div className="relative px-3 pb-2.5 pt-6 flex flex-col z-10">
@@ -254,7 +260,8 @@ export default function SolutionPage() {
 
   // ── Fetch hero (latest solutions, no tag filter)
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=8&categoryId=${SOLUTION_CATEGORY_ID}`)
+    document.title = "U44 Technology Solutions | Solutions";
+    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1`)
       .then((r) => r.json())
       .then((d) => setHeroPost(d.data || []))
       .catch(() => {});
@@ -264,7 +271,7 @@ export default function SolutionPage() {
   const fetchGrid = useCallback(async (tab: string, pageNum: number) => {
     setLoading(true);
     try {
-      const url = `${API}/posts?page=${pageNum}&limit=12&categoryId=${SOLUTION_CATEGORY_ID}&q=${encodeURIComponent(tab)}`;
+      const url = `${API}/posts?page=${pageNum}&limit=12&tag=${SOLUTION_TAG}&q=${encodeURIComponent(tab)}&status=1`;
       const r = await fetch(url);
       const d = await r.json();
       const newPosts = d.data || [];

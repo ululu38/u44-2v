@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-const SOLUTION_CATEGORY_ID = 2;
-const PROJECT_CATEGORY_ID  = 3;
-const NEWS_CATEGORY_ID     = 1;
-const MOVEMENT_CATEGORY_ID = 6;
+const SOLUTION_TAG = "Solution";
+const PROJECT_TAG  = "Project";
+const NEWS_TAG     = "News";
+const MOVEMENT_TAG = "Movement";
 
 interface Post {
   postId:          number;
@@ -224,7 +224,7 @@ function SolutionsSwiper() {
   const [visibleCount, setVisibleCount] = useState(3);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=8&categoryId=${SOLUTION_CATEGORY_ID}`)
+    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {});
   }, []);
 
@@ -290,29 +290,31 @@ function SolutionsSwiper() {
                   href={`/posts/${post.slug || post.postId}`}
                   style={{ flexShrink: 0, width: "calc(33.33% - 16px)", display: "block", textDecoration: "none" }}
                 >
-                  <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 12, overflow: "hidden", background: "#1a1a1a", border: "1px solid #2a2a2a", transition: "all .35s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px)"; (e.currentTarget as HTMLElement).style.borderColor = "#555"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                  <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 6, overflow: "hidden", background: "#1a1a1a", border: "1px solid #4b5563", transition: "all .35s", transform: "translateZ(0)", willChange: "transform" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px) translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
-                    {thumb ? (
-                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                      />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a", color: "#444" }}>
-                        <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                      </div>
-                    )}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
-                      <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 12px", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", letterSpacing: "-0.01em" }}>
-                        {post.title}
-                      </p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ color: "#777", fontSize: 11, fontWeight: 500 }}>{formatDate(post.createdAt)}</span>
-                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#ddd" }}>arrow_forward</span>
+                    <div style={{ position: "absolute", inset: 0 }}>
+                      {thumb ? (
+                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
+                        />
+                      ) : (
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a", color: "#444" }}>
+                          <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
+                        <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 12px", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", letterSpacing: "-0.01em" }}>
+                          {post.title}
+                        </p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: "#777", fontSize: 11, fontWeight: 500 }}>{formatDate(post.createdAt)}</span>
+                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#ddd" }}>arrow_forward</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -360,7 +362,7 @@ function ProductSection() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API}/posts?page=1&limit=4&categoryId=${SOLUTION_CATEGORY_ID}&q=${encodeURIComponent(activeTab)}`)
+    fetch(`${API}/posts?page=1&limit=4&tag=${SOLUTION_TAG}&q=${encodeURIComponent(activeTab)}&status=1`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {}).finally(() => setLoading(false));
   }, [activeTab]);
 
@@ -435,9 +437,9 @@ function ProductSection() {
                 <Link key={post.postId} href={`/posts/${post.slug || post.postId}`}
                   style={{ display: "block", textDecoration: "none" }}
                 >
-                  <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 12, overflow: "hidden", background: "#1a1a1a", border: "1px solid #2a2a2a", transition: "all .35s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px)"; (e.currentTarget as HTMLElement).style.borderColor = "#555"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                  <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 6, overflow: "hidden", background: "#1a1a1a", border: "1px solid #4b5563", transition: "all .35s", transform: "translateZ(0)", willChange: "transform" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px) translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
                     {thumb ? (
                       <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }} loading="lazy"
@@ -480,7 +482,7 @@ function RecentProjects() {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=4&categoryId=${PROJECT_CATEGORY_ID}`)
+    fetch(`${API}/posts?page=1&limit=4&tag=${PROJECT_TAG}&status=1`)
       .then(r => r.json()).then(d => setPosts((d.data || []).slice(0, 4))).catch(() => {});
   }, []);
 
@@ -517,28 +519,30 @@ function RecentProjects() {
                 <Link key={post.postId} href={`/posts/${post.slug || post.postId}`}
                   style={{ display: "block", textDecoration: "none", gridRow: "1 / 4" }}
                 >
-                  <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 480, borderRadius: 14, overflow: "hidden", background: "#1a1a1a", border: "1px solid #2a2a2a", transition: "all .35s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#555"; (e.currentTarget as HTMLElement).style.boxShadow = "0 24px 80px rgba(0,0,0,0.7)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                  <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 480, borderRadius: 6, overflow: "hidden", background: "#1a1a1a", border: "1px solid #4b5563", transition: "all .35s", transform: "translateZ(0)", willChange: "transform" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 24px 80px rgba(0,0,0,0.7)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
-                    {thumb ? (
-                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }} loading="lazy"
-                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                      />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                        <span className="material-icons" style={{ fontSize: 64 }}>image</span>
-                      </div>
-                    )}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)" }} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 24px 24px", zIndex: 2 }}>
-                      <span style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#aaa", fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 4, marginBottom: 12 }}>Featured Project</span>
-                      <p style={{ color: "#fff", fontSize: 20, fontWeight: 800, margin: "0 0 14px", lineHeight: 1.35, letterSpacing: "-0.02em" }}>{post.title}</p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ color: "#777", fontSize: 12 }}>{formatDate(post.createdAt)}</span>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>arrow_forward</span>
+                    <div style={{ position: "absolute", inset: 0 }}>
+                      {thumb ? (
+                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }} loading="lazy"
+                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
+                        />
+                      ) : (
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                          <span className="material-icons" style={{ fontSize: 64 }}>image</span>
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 24px 24px", zIndex: 2 }}>
+                        <span style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#aaa", fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 4, marginBottom: 12 }}>Featured Project</span>
+                        <p style={{ color: "#fff", fontSize: 20, fontWeight: 800, margin: "0 0 14px", lineHeight: 1.35, letterSpacing: "-0.02em" }}>{post.title}</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: "#777", fontSize: 12 }}>{formatDate(post.createdAt)}</span>
+                          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>arrow_forward</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -553,27 +557,29 @@ function RecentProjects() {
                 <Link key={post.postId} href={`/posts/${post.slug || post.postId}`}
                   style={{ display: "block", textDecoration: "none" }}
                 >
-                  <div style={{ position: "relative", width: "100%", paddingBottom: "52%", borderRadius: 12, overflow: "hidden", background: "#1a1a1a", border: "1px solid #2a2a2a", transition: "all .3s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#555"; (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                  <div style={{ position: "relative", width: "100%", paddingBottom: "52%", borderRadius: 6, overflow: "hidden", background: "#1a1a1a", border: "1px solid #4b5563", transition: "all .3s", transform: "translateZ(0)", willChange: "transform" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.5)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
-                    {thumb ? (
-                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .5s" }} loading="lazy"
-                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                      />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                        <span className="material-icons" style={{ fontSize: 40 }}>image</span>
-                      </div>
-                    )}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)" }} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 18px 14px", zIndex: 2 }}>
-                      <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, margin: "0 0 10px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{post.title}</p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ color: "#777", fontSize: 11 }}>{formatDate(post.createdAt)}</span>
-                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#ddd" }}>arrow_forward</span>
+                    <div style={{ position: "absolute", inset: 0 }}>
+                      {thumb ? (
+                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .5s" }} loading="lazy"
+                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
+                        />
+                      ) : (
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                          <span className="material-icons" style={{ fontSize: 40 }}>image</span>
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 18px 14px", zIndex: 2 }}>
+                        <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, margin: "0 0 10px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{post.title}</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: "#777", fontSize: 11 }}>{formatDate(post.createdAt)}</span>
+                          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#ddd" }}>arrow_forward</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -597,7 +603,7 @@ function LatestNews() {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=4&categoryId=${NEWS_CATEGORY_ID}`)
+    fetch(`${API}/posts?page=1&limit=4&tag=${NEWS_TAG}&status=1`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {});
   }, []);
 
@@ -640,29 +646,31 @@ function LatestNews() {
                 <Link key={post.postId} href={`/posts/${post.slug || post.postId}`}
                   style={{ flexShrink: 0, width: "calc(50% - 12px)", display: "block", textDecoration: "none" }}
                 >
-                  <div style={{ position: "relative", width: "100%", paddingBottom: "58%", borderRadius: 14, overflow: "hidden", background: "#1a1a1a", border: "1px solid #2a2a2a", transition: "all .35s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#555"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                  <div style={{ position: "relative", width: "100%", paddingBottom: "58%", borderRadius: 6, overflow: "hidden", background: "#1a1a1a", border: "1px solid #4b5563", transition: "all .35s", transform: "translateZ(0)", willChange: "transform" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
-                    {thumb ? (
-                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }} loading="lazy"
-                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                      />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                        <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                      </div>
-                    )}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 22px 20px", zIndex: 2 }}>
-                      <p style={{ color: "#fff", fontSize: 17, fontWeight: 700, margin: "0 0 14px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", letterSpacing: "-0.01em" }}>
-                        {post.title}
-                      </p>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ color: "#777", fontSize: 12, fontWeight: 500 }}>{formatDate(post.createdAt)}</span>
-                        <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>arrow_forward</span>
+                    <div style={{ position: "absolute", inset: 0 }}>
+                      {thumb ? (
+                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }} loading="lazy"
+                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
+                        />
+                      ) : (
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                          <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 22px 20px", zIndex: 2 }}>
+                        <p style={{ color: "#fff", fontSize: 17, fontWeight: 700, margin: "0 0 14px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", letterSpacing: "-0.01em" }}>
+                          {post.title}
+                        </p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: "#777", fontSize: 12, fontWeight: 500 }}>{formatDate(post.createdAt)}</span>
+                          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#fff" }}>arrow_forward</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -696,7 +704,7 @@ function CompanyMovement() {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=3&categoryId=${MOVEMENT_CATEGORY_ID}`)
+    fetch(`${API}/posts?page=1&limit=3&tag=${MOVEMENT_TAG}&status=1`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {});
   }, []);
 
@@ -729,29 +737,31 @@ function CompanyMovement() {
               <Link key={post.postId} href={`/posts/${post.slug || post.postId}`}
                 style={{ display: "block", textDecoration: "none" }}
               >
-                <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 12, overflow: "hidden", background: "#1a1a1a", border: "1px solid #2a2a2a", transition: "all .35s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px)"; (e.currentTarget as HTMLElement).style.borderColor = "#555"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
+                <div style={{ position: "relative", width: "100%", paddingBottom: "62%", borderRadius: 6, overflow: "hidden", background: "#1a1a1a", border: "1px solid #4b5563", transition: "all .35s", transform: "translateZ(0)", willChange: "transform" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px) translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                 >
-                  {thumb ? (
-                    <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }} loading="lazy"
-                      onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                    />
-                  ) : (
-                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                      <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                    </div>
-                  )}
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
-                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
-                    <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 12px", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {post.title}
-                    </p>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ color: "#777", fontSize: 11 }}>{formatDate(post.createdAt)}</span>
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#ddd" }}>arrow_forward</span>
+                  <div style={{ position: "absolute", inset: 0 }}>
+                    {thumb ? (
+                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }} loading="lazy"
+                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
+                      />
+                    ) : (
+                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                        <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                      </div>
+                    )}
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
+                      <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 12px", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {post.title}
+                      </p>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ color: "#777", fontSize: 11 }}>{formatDate(post.createdAt)}</span>
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#ddd" }}>arrow_forward</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -894,6 +904,14 @@ function VerticalCTA() {
 function InfiniteSlider({ title, items, href, reverse = false }: {
   title: string; items: string[]; href: string; reverse?: boolean;
 }) {
+  if (items.length === 0) return null;
+
+  // Duplicate items so we have enough content to fill the screen and animate smoothly
+  let marqueeItems = [...items];
+  while (marqueeItems.length < 24) {
+    marqueeItems = [...marqueeItems, ...items];
+  }
+
   return (
     <section style={{ padding: "56px 0", background: "#0d0d0d", borderBottom: "1px solid #1a1a1a" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto 24px", padding: "0 24px", textAlign: "center" }}>
@@ -909,7 +927,7 @@ function InfiniteSlider({ title, items, href, reverse = false }: {
         <div style={{ position: "absolute", inset: 0, left: 0, width: 80, background: "linear-gradient(to right, #0d0d0d, transparent)", zIndex: 2, pointerEvents: "none" }} />
         <div style={{ position: "absolute", inset: 0, right: 0, left: "auto", width: 80, background: "linear-gradient(to left, #0d0d0d, transparent)", zIndex: 2, pointerEvents: "none" }} />
         <div className={reverse ? "logo-slide-rev" : "logo-slide"} style={{ display: "flex", alignItems: "center", gap: 60, width: "fit-content" }}>
-          {[...items, ...items, ...items].map((src, i) => (
+          {[...marqueeItems, ...marqueeItems].map((src, i) => (
             <div key={i} style={{ flexShrink: 0, width: 110, height: 55, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <img src={src} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: "grayscale(100%)", opacity: 0.4, transition: "all .3s" }}
                 loading="lazy"
@@ -922,8 +940,8 @@ function InfiniteSlider({ title, items, href, reverse = false }: {
         </div>
       </div>
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes logoSlide { from { transform: translateX(0); } to { transform: translateX(-33.33%); } }
-        @keyframes logoSlideRev { from { transform: translateX(-33.33%); } to { transform: translateX(0); } }
+        @keyframes logoSlide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes logoSlideRev { from { transform: translateX(-50%); } to { transform: translateX(0); } }
         .logo-slide { animation: logoSlide 38s linear infinite; }
         .logo-slide-rev { animation: logoSlideRev 38s linear infinite; }
         .logo-slide:hover, .logo-slide-rev:hover { animation-play-state: paused; }
@@ -950,6 +968,43 @@ const PARTNERS = Array.from({ length: 34 }, (_, i) => {
 // MAIN
 // ─────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const [dbPartners, setDbPartners] = useState<string[]>([]);
+  const [dbClients, setDbClients] = useState<string[]>([]);
+
+  useEffect(() => {
+    document.title = "U44 Technology Solutions | Home";
+    // Fetch partners from database
+    fetch(`${API}/partners?page=1&limit=100`)
+      .then((r) => r.json())
+      .then((d) => {
+        const urls = (d.data || [])
+          .map((p: any) => p.logoMedia?.urlMini || p.logoMedia?.urlThumb || p.logoMedia?.urlFull)
+          .filter(Boolean)
+          .map((url: string) => imgUrl(url));
+        if (urls.length > 0) {
+          setDbPartners(urls);
+        }
+      })
+      .catch((err) => console.error("Error fetching partners:", err));
+
+    // Fetch clients from database
+    fetch(`${API}/clients?page=1&limit=100`)
+      .then((r) => r.json())
+      .then((d) => {
+        const urls = (d.data || [])
+          .map((c: any) => c.logoMedia?.urlMini || c.logoMedia?.urlThumb || c.logoMedia?.urlFull)
+          .filter(Boolean)
+          .map((url: string) => imgUrl(url));
+        if (urls.length > 0) {
+          setDbClients(urls);
+        }
+      })
+      .catch((err) => console.error("Error fetching clients:", err));
+  }, []);
+
+  const displayPartners = dbPartners.length > 0 ? dbPartners : PARTNERS;
+  const displayClients = dbClients.length > 0 ? dbClients : CLIENTS;
+
   return (
     <div style={{ minHeight: "100vh", background: "#0d0d0d", color: "#e0e0e0" }}>
       <MainHero />
@@ -960,8 +1015,8 @@ export default function LandingPage() {
       <CompanyMovement />
       <StatsBanner />
       <VerticalCTA />
-      <InfiniteSlider title="Our Partners" items={PARTNERS} href="/partner" />
-      <InfiniteSlider title="Our Clients"  items={CLIENTS}  href="/client"  reverse />
+      <InfiniteSlider title="Our Partners" items={displayPartners} href="/partner" />
+      <InfiniteSlider title="Our Clients"  items={displayClients}  href="/client"  reverse />
     </div>
   );
 }

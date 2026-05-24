@@ -8,14 +8,14 @@ async function inspectSpecificPost() {
   const db = drizzle(pool, { schema });
 
   const matchingPosts = await db.query.posts.findMany({
-    where: like(schema.posts.content, '%20250225_032811_6237.jpg%')
+    where: like(schema.posts.contentHtml, '%20250225_032811_6237.jpg%')
   });
 
   console.log(`Found ${matchingPosts.length} posts matching.`);
   for (const post of matchingPosts) {
     console.log(`Post ID: ${post.postId} | Title: ${post.title}`);
     console.log('Content snippet:');
-    console.log(post.content);
+    console.log(post.contentHtml);
     console.log('------------------------------');
   }
 

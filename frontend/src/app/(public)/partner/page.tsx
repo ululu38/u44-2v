@@ -18,6 +18,7 @@ export default function PartnerPage() {
 
   useEffect(() => {
     setIsVisible(true);
+    document.title = "U44 Technology Solutions | Our Partners";
 
     const fetchPartners = async () => {
       try {

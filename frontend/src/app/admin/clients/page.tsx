@@ -105,8 +105,7 @@ export default function ClientsPage() {
     const data: any = Object.fromEntries(formData.entries());
     
     if (data.displayOrder) data.displayOrder = parseInt(data.displayOrder as string);
-    if (data.logoMediaId) data.logoMediaId = parseInt(data.logoMediaId as string);
-    else delete data.logoMediaId;
+    data.logoMediaId = data.logoMediaId ? parseInt(data.logoMediaId as string) : null;
 
     // Add selected groupIds to the request payload
     data.groupIds = selectedGroupIds;

@@ -10,6 +10,7 @@ export default function AboutUs() {
 
   useEffect(() => {
     setIsVisible(true);
+    document.title = "U44 Technology Solutions | About Us";
 
     const fetchPartners = async () => {
       try {

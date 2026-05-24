@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, ParseIntPipe, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, ParseIntPipe, NotFoundException, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth, ApiParam } from '@nestjs/swagger';
 import { DrizzleService } from '../../infrastructure/db/drizzle.service.js';
 import { posts, postImages, postClients, clients, clientGroups, clientGroupRelations } from '../../domain/entities/schema.js';
 
 import { eq, desc, count, sql, ilike, or, and, exists } from 'drizzle-orm';
-import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard.js';
+import { JwtAuthGuard, OptionalJwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../infrastructure/auth/guards/roles.guard.js';
 import { Roles } from '../../infrastructure/auth/decorators/roles.decorator.js';
 import { CreatePostDto, UpdatePostDto } from '../dtos/post.dto.js';
@@ -23,6 +23,21 @@ export class PostController {
     private readonly hashtagsService: HashtagsService,
   ) {}
 
+  private stripHtml(html: string): string {
+    if (!html) return '';
+    let text = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
+    text = text.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, '');
+    text = text.replace(/<[^>]*>/g, ' ');
+    text = text
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'");
+    return text.replace(/\s+/g, ' ').trim();
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'employee')
@@ -31,14 +46,21 @@ export class PostController {
   @ApiResponse({ status: 201, description: 'Post created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createPostDto: CreatePostDto) {
-    const { sliderImageIds, clientIds, ...postData } = createPostDto;
+    const { sliderImageIds, clientIds, content, contentHtml, contentText, ...postData } = createPostDto;
     
     // Safeguard: Convert empty strings to null for numeric fields
     if ((postData as any).thumbnailMediaId === "") {
       (postData as any).thumbnailMediaId = null;
     }
+
+    const finalContentHtml = contentHtml || content || '';
+    const finalContentText = contentText || this.stripHtml(finalContentHtml);
     
-    const result = await this.drizzle.db.insert(posts).values(postData).returning();
+    const result = await this.drizzle.db.insert(posts).values({
+      ...postData,
+      contentHtml: finalContentHtml,
+      contentText: finalContentText,
+    } as any).returning();
     const newPost = result[0];
     
     // Handle slider images
@@ -89,15 +111,23 @@ export class PostController {
 
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get all posts' })
   @ApiResponse({ status: 200, description: 'Return all posts' })
   async findAll(
+    @Req() req: any,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
     @Query('q') q?: string,
-    @Query('categoryId') categoryId?: string,
-    @Query('clientId') clientId?: string
+    @Query('clientId') clientId?: string,
+    @Query('tag') tag?: string,
+    @Query('status') status?: string
   ) {
+    const isLogged = !!req.user;
+    if (!isLogged) {
+      status = '1';
+    }
+
     const p = parseInt(page);
     const l = parseInt(limit);
     const offset = (p - 1) * l;
@@ -107,7 +137,7 @@ export class PostController {
     if (q) {
       conditions.push(or(
         ilike(posts.title, `%${q}%`),
-        ilike(posts.content, `%${q}%`),
+        ilike(posts.contentText, `%${q}%`),
         ilike(sql`${posts.tags}::text`, `%${q}%`),
         exists(
           this.drizzle.db.select()
@@ -125,8 +155,12 @@ export class PostController {
         )
       ));
     }
-    if (categoryId && categoryId !== 'all') {
-      conditions.push(sql`${parseInt(categoryId)} = ANY(${posts.categoryIds})`);
+    if (tag) {
+      conditions.push(or(
+        sql`${posts.tags} @> ${JSON.stringify([tag])}::jsonb`,
+        sql`${posts.tags} @> ${JSON.stringify([tag.toLowerCase()])}::jsonb`,
+        sql`${posts.tags} @> ${JSON.stringify([tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()])}::jsonb`
+      ));
     }
     if (clientId && clientId !== 'all') {
       conditions.push(exists(
@@ -137,6 +171,9 @@ export class PostController {
             eq(postClients.clientId, parseInt(clientId))
           ))
       ));
+    }
+    if (status && status !== 'all') {
+      conditions.push(eq(posts.status, parseInt(status)));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -174,6 +211,7 @@ export class PostController {
       const { clients: postClientsList, sliderImages, thumbnailMedia, ...rest } = postObj;
       return {
         ...rest,
+        content: rest.contentHtml,
         thumbnailMedia: transformMedia(thumbnailMedia),
         sliderImages: sliderImages ? sliderImages.map((si: any) => ({
           ...si,
@@ -211,11 +249,12 @@ export class PostController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get post by ID' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiResponse({ status: 200, description: 'Return post' })
   @ApiResponse({ status: 404, description: 'Post not found' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Req() req: any, @Param('id', ParseIntPipe) id: number) {
     const post = await this.drizzle.db.query.posts.findFirst({
       where: eq(posts.postId, id),
       with: {
@@ -244,11 +283,17 @@ export class PostController {
 
     if (!post) throw new NotFoundException('Post not found');
 
+    const isLogged = !!req.user;
+    if (!isLogged && post.status !== 1) {
+      throw new NotFoundException('Post not found');
+    }
+
     const transformPost = (postObj: any) => {
       if (!postObj) return postObj;
       const { clients: postClientsList, sliderImages, thumbnailMedia, ...rest } = postObj;
       return {
         ...rest,
+        content: rest.contentHtml,
         thumbnailMedia: transformMedia(thumbnailMedia),
         sliderImages: sliderImages ? sliderImages.map((si: any) => ({
           ...si,
@@ -292,12 +337,23 @@ export class PostController {
   @ApiParam({ name: 'id', type: 'number' })
   @ApiResponse({ status: 200, description: 'Post updated successfully' })
   async update(@Param('id', ParseIntPipe) id: number, @Body() updatePostDto: UpdatePostDto) {
-    const { sliderImageIds, clientIds, ...dtoData } = updatePostDto;
+    const { sliderImageIds, clientIds, content, contentHtml, contentText, ...dtoData } = updatePostDto;
     const updateData: any = { ...dtoData, updatedAt: new Date() };
     
     // Safeguard: Convert empty strings to null for numeric fields
     if (updateData.thumbnailMediaId === "") {
       updateData.thumbnailMediaId = null;
+    }
+
+    if (contentHtml !== undefined || content !== undefined) {
+      const finalContentHtml = contentHtml !== undefined ? contentHtml : content;
+      updateData.contentHtml = finalContentHtml;
+      if (contentText === undefined) {
+        updateData.contentText = this.stripHtml(finalContentHtml || '');
+      }
+    }
+    if (contentText !== undefined) {
+      updateData.contentText = contentText;
     }
     
     // If title changes, regenerate slug

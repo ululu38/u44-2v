@@ -73,8 +73,7 @@ export default function PartnersPage() {
     const data: any = Object.fromEntries(formData.entries());
     
     if (data.displayOrder) data.displayOrder = parseInt(data.displayOrder as string);
-    if (data.logoMediaId) data.logoMediaId = parseInt(data.logoMediaId as string);
-    else delete data.logoMediaId;
+    data.logoMediaId = data.logoMediaId ? parseInt(data.logoMediaId as string) : null;
 
     const method = editingPartner ? 'PATCH' : 'POST';
     const url = editingPartner 
@@ -257,7 +256,6 @@ export default function PartnersPage() {
                   <input 
                     type="hidden"
                     name="logoMediaId" 
-                    required 
                     value={modalLogoMediaId || ''} 
                   />
                 </div>

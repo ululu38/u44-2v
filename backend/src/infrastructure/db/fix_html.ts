@@ -14,9 +14,9 @@ async function fixHtml() {
   let updatedCount = 0;
 
   for (const post of allPosts) {
-    if (!post.content) continue;
+    if (!post.contentHtml) continue;
     
-    let newContent = post.content;
+    let newContent = post.contentHtml;
     let changed = false;
 
     // Fix relative paths
@@ -64,7 +64,7 @@ async function fixHtml() {
     }
 
     if (changed) {
-      await db.update(schema.posts).set({ content: newContent }).where(eq(schema.posts.postId, post.postId));
+      await db.update(schema.posts).set({ contentHtml: newContent }).where(eq(schema.posts.postId, post.postId));
       updatedCount++;
     }
   }
