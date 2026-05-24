@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/uploads/:path*`,
+      },
+      {
+        source: '/images/:path*',
+        destination: `https://u44tech.com/images/:path*`,
+      }
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -20,6 +32,5 @@ const nextConfig: NextConfig = {
 
   },
 };
-
 
 export default nextConfig;

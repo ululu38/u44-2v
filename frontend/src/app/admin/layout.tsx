@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "./admin.css";
@@ -9,6 +9,8 @@ const sidebarItems = [
   { id: "posts", icon: "article", label: "Posts", link: "/admin/posts" },
   { id: "tickets", icon: "mail", label: "กล่องข้อความ", link: "/admin/tickets" },
   { id: "partners", icon: "handshake", label: "Partners", link: "/admin/partners" },
+  { id: "clients", icon: "business", label: "ลูกค้า", link: "/admin/clients" },
+  { id: "client-groups", icon: "sell", label: "กลุ่มลูกค้า", link: "/admin/client-groups" },
   { id: "users", icon: "person", label: "Users", link: "/admin/users" },
   { id: "settings", icon: "settings", label: "Settings", link: "/admin/settings" },
 ];
@@ -20,6 +22,40 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const localUser = localStorage.getItem("user");
+      if (!localUser) {
+        window.location.href = "/login";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Not authenticated');
+        }
+        setLoading(false);
+      } catch (err) {
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f8fafc]">
+        <div className="text-slate-500 font-medium">Checking authentication...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
@@ -67,7 +103,7 @@ export default function AdminLayout({
 
         <div className="p-4 border-t border-slate-700/50">
           <Link
-            href="/admin/login"
+            href="/login"
             className="flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
           >
             <span className="material-icons text-[20px]">logout</span>

@@ -22,6 +22,8 @@ export class CreatePostDto {
   @ApiPropertyOptional({ example: [1, 2, 3] })
   categoryIds?: number[];
 
+  @ApiPropertyOptional({ example: [1, 2] })
+  clientIds?: number[];
 }
 
 export class UpdatePostDto {
@@ -46,5 +48,7 @@ export class UpdatePostDto {
   @ApiPropertyOptional({ example: [1, 2, 3] })
   categoryIds?: number[];
 
+  @ApiPropertyOptional({ example: [1, 2] })
+  clientIds?: number[];
 }
 

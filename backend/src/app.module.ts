@@ -16,6 +16,10 @@ import { PartnerController } from './interface/controllers/partner.controller.js
 import { MediaController } from './interface/controllers/media.controller.js';
 import { MediaService } from './infrastructure/media/media.service.js';
 import { SlugService } from './infrastructure/media/slug.service.js';
+import { HashtagsService } from './infrastructure/search/hashtags.service.js';
+import { HashtagController } from './interface/controllers/hashtag.controller.js';
+import { ClientGroupController } from './interface/controllers/client-group.controller.js';
+import { ClientController } from './interface/controllers/client.controller.js';
 
 
 
@@ -46,6 +50,9 @@ import { SlugService } from './infrastructure/media/slug.service.js';
     PostController,
     PartnerController,
     MediaController,
+    HashtagController,
+    ClientGroupController,
+    ClientController,
   ],
 
 
@@ -56,6 +63,7 @@ import { SlugService } from './infrastructure/media/slug.service.js';
     JwtStrategy,
     MediaService,
     SlugService,
+    HashtagsService,
   ],
 
 

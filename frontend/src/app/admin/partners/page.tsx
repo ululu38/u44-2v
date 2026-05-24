@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import MediaGallery from "@/components/common/MediaGallery";
 
 interface Partner {
   partnerId: number;
   name: string;
-  logoUrl: string;
-  websiteUrl: string;
+  logoMediaId: number | null;
+  logoMedia?: any;
   description: string;
   displayOrder: number;
 }
@@ -26,7 +28,21 @@ export default function PartnersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [modalLogoUrl, setModalLogoUrl] = useState("");
+  const [showGallery, setShowGallery] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [modalLogoMediaId, setModalLogoMediaId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const openModal = (partner: Partner | null) => {
+    setEditingPartner(partner);
+    setModalLogoMediaId(partner ? partner.logoMediaId : null);
+    setModalLogoUrl(partner && partner.logoMedia ? (partner.logoMedia.urlThumb || partner.logoMedia.urlFull) : "");
+    setIsModalOpen(true);
+  };
 
   const fetchPartners = async (page = 1) => {
     setLoading(true);
@@ -51,42 +67,14 @@ export default function PartnersPage() {
     fetchPartners(currentPage);
   }, [currentPage]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/gallery/upload`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const logoInput = document.getElementById('logoUrl') as HTMLInputElement;
-        if (logoInput) {
-            logoInput.value = `/gallery/${result.id}/view?w=400&q=80`;
-        }
-        alert('Upload successful with optimization');
-      }
-    } catch (err) {
-      alert('Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data: any = Object.fromEntries(formData.entries());
     
     if (data.displayOrder) data.displayOrder = parseInt(data.displayOrder as string);
+    if (data.logoMediaId) data.logoMediaId = parseInt(data.logoMediaId as string);
+    else delete data.logoMediaId;
 
     const method = editingPartner ? 'PATCH' : 'POST';
     const url = editingPartner 
@@ -131,7 +119,8 @@ export default function PartnersPage() {
   if (loading && partners.length === 0) return <div className="p-8 text-center text-gray-500">Loading partners...</div>;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <>
+      <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div>
           <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
@@ -141,7 +130,7 @@ export default function PartnersPage() {
           <p className="text-gray-500 mt-1">Manage partners with pagination and image uploads.</p>
         </div>
         <button 
-          onClick={() => { setEditingPartner(null); setIsModalOpen(true); }}
+          onClick={() => openModal(null)}
           className="bg-[#007bff] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#0069d9] transition-all shadow-md flex items-center gap-2 active:scale-95"
         >
           <span className="material-icons">add</span>
@@ -166,7 +155,6 @@ export default function PartnersPage() {
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
                 <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase">Partner</th>
-                <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase">Website</th>
                 <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase text-center">Order</th>
                 <th className="px-6 py-5 text-sm font-bold text-gray-600 uppercase text-center">Actions</th>
               </tr>
@@ -177,20 +165,25 @@ export default function PartnersPage() {
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white p-1">
-                        <img src={p.logoUrl.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${p.logoUrl}` : p.logoUrl} alt="" className="w-full h-full object-contain" />
+                        {p.logoMedia ? (
+                          <img 
+                            src={(p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull).startsWith('/') && !(p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_API_URL}${p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull}` : (p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull)} 
+                            alt="" 
+                            className="w-full h-full object-contain" 
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">No Image</div>
+                        )}
                       </div>
                       <span className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{p.name}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className="text-sm text-blue-500">{p.websiteUrl}</span>
                   </td>
                   <td className="px-6 py-5 text-center">
                     <span className="text-sm font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">{p.displayOrder}</span>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex justify-center gap-3">
-                      <button onClick={() => { setEditingPartner(p); setIsModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 rounded-full transition-all"><span className="material-icons text-2xl">edit</span></button>
+                      <button onClick={() => openModal(p)} className="p-2 text-blue-500 hover:bg-blue-100 rounded-full transition-all"><span className="material-icons text-2xl">edit</span></button>
                       <button onClick={() => handleDelete(p.partnerId)} className="p-2 text-red-400 hover:bg-red-100 rounded-full transition-all"><span className="material-icons text-2xl">delete_outline</span></button>
                     </div>
                   </td>
@@ -212,9 +205,9 @@ export default function PartnersPage() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-8 animate-in zoom-in duration-200">
+      {isModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-start md:items-center z-50 p-4 overflow-y-auto py-10 animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-8 my-auto animate-in zoom-in-95 duration-300">
             <h3 className="text-2xl font-bold text-gray-800 mb-6">{editingPartner ? 'Edit Partner' : 'New Partner'}</h3>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -224,19 +217,51 @@ export default function PartnersPage() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-semibold text-gray-600 mb-2">Partner Logo</label>
-                  <div className="flex items-center gap-4 mb-2">
-                    <input type="file" onChange={handleFileUpload} className="hidden" id="logo-upload" accept="image/*" />
-                    <label htmlFor="logo-upload" className="bg-gray-100 px-4 py-2 rounded border border-gray-300 cursor-pointer hover:bg-gray-200 transition-all flex items-center gap-2 text-sm font-bold text-gray-700">
-                        <span className="material-icons text-sm">{uploading ? 'sync' : 'upload'}</span>
-                        {uploading ? 'Uploading...' : 'Upload Logo'}
-                    </label>
+                  <div className="flex items-center gap-4 mb-3">
+                    {modalLogoUrl ? (
+                      <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-white p-1 group flex items-center justify-center">
+                        <img 
+                          src={modalLogoUrl.startsWith('/') && !modalLogoUrl.startsWith('/images/') ? `${process.env.NEXT_PUBLIC_API_URL}${modalLogoUrl}` : modalLogoUrl} 
+                          alt="Logo Preview" 
+                          className="w-full h-full object-contain" 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setModalLogoUrl("");
+                            setModalLogoMediaId(null);
+                          }}
+                          className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400">
+                        <span className="material-icons text-2xl">image</span>
+                        <span className="text-[9px] mt-1 uppercase font-bold">No Logo</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowGallery(true)}
+                        className="bg-blue-600 px-4 py-2 rounded-lg text-white hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 text-xs font-bold active:scale-95"
+                      >
+                          <span className="material-icons text-sm">collections</span>
+                          Browse Gallery
+                      </button>
+                      <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Supports Uploading inside gallery</span>
+                    </div>
                   </div>
-                  <input id="logoUrl" name="logoUrl" required defaultValue={editingPartner?.logoUrl} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" placeholder="Logo URL" />
+                  <input 
+                    type="hidden"
+                    name="logoMediaId" 
+                    required 
+                    value={modalLogoMediaId || ''} 
+                  />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-600 mb-2">Website URL</label>
-                  <input name="websiteUrl" defaultValue={editingPartner?.websiteUrl} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm" />
-                </div>
+
                 <div className="col-span-2">
                   <label className="block text-sm font-semibold text-gray-600 mb-2">Description</label>
                   <textarea name="description" defaultValue={editingPartner?.description} rows={3} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none shadow-sm" />
@@ -252,8 +277,24 @@ export default function PartnersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+
+      </div>
+
+      {showGallery && mounted && createPortal(
+        <MediaGallery 
+          isModal={true} 
+          onSelect={(media: any) => {
+            setModalLogoUrl(media.urlThumb || media.urlFull);
+            setModalLogoMediaId(media.id);
+            setShowGallery(false);
+          }} 
+          onClose={() => setShowGallery(false)} 
+        />,
+        document.body
+      )}
+    </>
   );
 }

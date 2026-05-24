@@ -18,4 +18,8 @@ export default () => ({
     password: process.env.INITIAL_ADMIN_PASSWORD || 'password123',
     email: process.env.INITIAL_ADMIN_EMAIL || 'admin@u44tech.com',
   },
+  meili: {
+    host: process.env.MEILI_HOST || 'http://localhost:7700',
+    key: process.env.MEILI_KEY || 'u44masterkey',
+  },
 });

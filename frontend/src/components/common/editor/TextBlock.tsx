@@ -123,7 +123,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
         contentEditable
         onInput={(e) => onUpdate({ content: e.currentTarget.innerHTML })}
         className={`outline-none min-h-[1.5em] ${getTagClass()}`}
-        placeholder={type === 'p' ? 'Start typing...' : 'Heading...'}
+        {...{ placeholder: type === 'p' ? 'Start typing...' : 'Heading...' }}
         onKeyDown={(e) => {
           if (e.key === 'Backspace') {
             // If content is empty or just whitespace/single BR, remove block

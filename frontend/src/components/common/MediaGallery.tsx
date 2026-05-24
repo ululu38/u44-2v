@@ -7,6 +7,7 @@ export interface MediaItem {
   id: number;
   urlFull: string;
   urlThumb: string;
+  urlMini?: string;
   width: number;
   height: number;
   blurHash: string;
@@ -196,7 +197,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                 className={`group relative aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 transition-all shadow-sm ${isSelected ? 'border-blue-600 ring-2 ring-blue-600/20' : 'border-gray-200 hover:border-blue-400'}`}
               >
                 <Image
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${item.urlThumb}`}
+                  src={`${process.env.NEXT_PUBLIC_API_URL}${item.urlMini || item.urlThumb}`}
                   alt=""
                   fill
                   className={`object-cover transition-transform duration-500 ${isSelected ? 'scale-105' : 'group-hover:scale-110'}`}

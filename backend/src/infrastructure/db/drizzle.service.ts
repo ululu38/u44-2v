@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
 import { Pool } from 'pg';
 import * as schema from '../../domain/entities/schema.js';
 import * as bcrypt from 'bcrypt';
@@ -16,6 +17,9 @@ export class DrizzleService implements OnModuleInit {
       connectionString: this.configService.get<string>('database.url'),
     });
     this.db = drizzle(pool, { schema });
+
+    // Enable Trigram Extension for text search
+    await this.db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
 
     // Seed Initial Admin
     await this.seedAdmin();

@@ -19,6 +19,7 @@ export const media = pgTable('media', {
   filename: varchar('filename', { length: 255 }).notNull(),
   urlFull: varchar('url_full', { length: 500 }).notNull(),
   urlThumb: varchar('url_thumb', { length: 500 }).notNull(),
+  urlMini: varchar('url_mini', { length: 500 }).default('/images/fallback-mini.webp').notNull(),
   blurHash: text('blur_hash').notNull(),
   width: integer('width').notNull(),
   height: integer('height').notNull(),
@@ -51,11 +52,15 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     references: [media.id],
   }),
   sliderImages: many(postImages),
+  hashtags: many(postHashtags),
+  clients: many(postClients),
 }));
 
 export const mediaRelations = relations(media, ({ many }) => ({
   posts: many(posts),
   sliderImages: many(postImages),
+  partners: many(partners),
+  clients: many(clients),
 }));
 
 export const postImages = pgTable('post_images', {
@@ -90,12 +95,18 @@ export const partnerGroups = pgTable('partner_groups', {
 export const partners = pgTable('partners', {
   partnerId: serial('partner_id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
-  logoUrl: varchar('logo_url', { length: 255 }).notNull(),
-  websiteUrl: varchar('website_url', { length: 255 }),
+  logoMediaId: integer('logo_media_id').references(() => media.id, { onDelete: 'set null' }),
   description: text('description'),
   displayOrder: integer('display_order').default(0),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export const partnersRelations = relations(partners, ({ one }) => ({
+  logoMedia: one(media, {
+    fields: [partners.logoMediaId],
+    references: [media.id],
+  }),
+}));
 
 // Junction Tables
 
@@ -126,4 +137,108 @@ export const tickets = pgTable('tickets', {
   status: varchar('status', { length: 50 }).default('pending'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// 8. Hashtags Table
+export const hashtags = pgTable('hashtags', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).unique().notNull(),
+  usageCount: integer('usage_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// 9. Post-Hashtags Junction Table
+export const postHashtags = pgTable('post_hashtags', {
+  postId: integer('post_id').notNull().references(() => posts.postId, { onDelete: 'cascade' }),
+  hashtagId: integer('hashtag_id').notNull().references(() => hashtags.id, { onDelete: 'cascade' }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.postId, t.hashtagId] }),
+}));
+
+// Relations
+export const hashtagsRelations = relations(hashtags, ({ many }) => ({
+  posts: many(postHashtags),
+}));
+
+export const postHashtagsRelations = relations(postHashtags, ({ one }) => ({
+  post: one(posts, {
+    fields: [postHashtags.postId],
+    references: [posts.postId],
+  }),
+  hashtag: one(hashtags, {
+    fields: [postHashtags.hashtagId],
+    references: [hashtags.id],
+  }),
+}));
+
+
+// 10. Client Groups Table
+export const clientGroups = pgTable('client_groups', {
+  groupId: serial('group_id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  displayOrder: integer('display_order').default(0),
+});
+
+// 11. Clients Table
+export const clients = pgTable('clients', {
+  clientId: serial('client_id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  logoMediaId: integer('logo_media_id').references(() => media.id, { onDelete: 'set null' }),
+  displayOrder: integer('display_order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// 12. Client-Group Junction Table
+export const clientGroupRelations = pgTable('client_group_relations', {
+  clientId: integer('client_id').notNull().references(() => clients.clientId, { onDelete: 'cascade' }),
+  groupId: integer('group_id').notNull().references(() => clientGroups.groupId, { onDelete: 'cascade' }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.clientId, t.groupId] }),
+}));
+
+// Client-Group Relations
+export const clientGroupRelationsRelations = relations(clientGroupRelations, ({ one }) => ({
+  client: one(clients, {
+    fields: [clientGroupRelations.clientId],
+    references: [clients.clientId],
+  }),
+  group: one(clientGroups, {
+    fields: [clientGroupRelations.groupId],
+    references: [clientGroups.groupId],
+  }),
+}));
+
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  logoMedia: one(media, {
+    fields: [clients.logoMediaId],
+    references: [media.id],
+  }),
+  groups: many(clientGroupRelations),
+  posts: many(postClients),
+}));
+
+export const clientGroupsRelations = relations(clientGroups, ({ many }) => ({
+  clients: many(clientGroupRelations),
+}));
+
+// 13. Post-Clients Junction Table for Many-to-Many
+export const postClients = pgTable('post_clients', {
+  postId: integer('post_id').notNull().references(() => posts.postId, { onDelete: 'cascade' }),
+  clientId: integer('client_id').notNull().references(() => clients.clientId, { onDelete: 'cascade' }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.postId, t.clientId] }),
+}));
+
+export const postClientsRelations = relations(postClients, ({ one }) => ({
+  post: one(posts, {
+    fields: [postClients.postId],
+    references: [posts.postId],
+  }),
+  client: one(clients, {
+    fields: [postClients.clientId],
+    references: [clients.clientId],
+  }),
+}));
+
+
 

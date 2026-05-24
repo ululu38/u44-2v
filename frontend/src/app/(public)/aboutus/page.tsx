@@ -5,9 +5,26 @@ import { useEffect, useState } from "react";
 
 export default function AboutUs() {
   const [isVisible, setIsVisible] = useState(false);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
+
+    const fetchPartners = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/partners?page=1&limit=100`);
+        if (res.ok) {
+          const result = await res.json();
+          setPartners(result.data);
+        }
+      } catch (err) {
+        console.error("Error fetching partners:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPartners();
   }, []);
 
   const servicesLeft = [
@@ -130,24 +147,54 @@ export default function AboutUs() {
             <a href="/partner" className="bg-surface-card hover:bg-secondary text-foreground hover:text-white border border-border text-[10px] px-6 py-2 rounded-full font-bold uppercase tracking-widest transition-all">VIEW ALL</a>
          </div>
 
-         <div className="relative flex overflow-hidden">
+         <div className="relative flex overflow-hidden min-h-[80px]">
             <div className="flex gap-20 animate-scroll whitespace-nowrap">
-               {[...Array(20)].map((_, i) => {
-                 const num = ((i % 34) + 1).toString().padStart(3, '0');
+               {(() => {
+                 const staticPartners = [...Array(34)].map((_, i) => {
+                   const num = (i + 1).toString().padStart(3, '0');
+                   return {
+                     partnerId: -i,
+                     name: `Partner ${i + 1}`,
+                     logoMedia: { urlFull: `/images/partners/DM_20250114154507_${num}.png` }
+                   };
+                 });
+
+                 const displayPartners = loading ? [] : (partners.length > 0 ? partners : staticPartners);
+
+                 // Ensure we have enough items for marquee effect to animate smoothly without whitespace gaps
+                 let marqueePartners = [...displayPartners];
+                 while (marqueePartners.length > 0 && marqueePartners.length < 15) {
+                   marqueePartners = [...marqueePartners, ...displayPartners];
+                 }
+
                  return (
-                   <div key={i} className="flex-none w-40 h-20 relative opacity-70 hover:opacity-100 transition-opacity">
-                     <Image src={`/images/partners/DM_20250114154507_${num}.png`} alt={`Partner ${i+1}`} fill className="object-contain" />
-                   </div>
+                   <>
+                     {marqueePartners.map((p, idx) => {
+                       const logoUrl = p.logoMedia?.urlMini || p.logoMedia?.urlThumb || p.logoMedia?.urlFull || '';
+                       const formattedLogoUrl = logoUrl.startsWith('/') && !logoUrl.startsWith('/images/') 
+                         ? `${process.env.NEXT_PUBLIC_API_URL}${logoUrl}` 
+                         : logoUrl;
+                       return (
+                         <div key={`p1-${p.partnerId}-${idx}`} className="flex-none w-40 h-20 relative opacity-70 hover:opacity-100 transition-opacity">
+                           {formattedLogoUrl && <Image src={formattedLogoUrl} alt={p.name} fill className="object-contain" />}
+                         </div>
+                       );
+                     })}
+                     {/* Duplicate list for the infinite loop illusion */}
+                     {marqueePartners.map((p, idx) => {
+                       const logoUrl = p.logoMedia?.urlMini || p.logoMedia?.urlThumb || p.logoMedia?.urlFull || '';
+                       const formattedLogoUrl = logoUrl.startsWith('/') && !logoUrl.startsWith('/images/') 
+                         ? `${process.env.NEXT_PUBLIC_API_URL}${logoUrl}` 
+                         : logoUrl;
+                       return (
+                         <div key={`p2-dup-${p.partnerId}-${idx}`} className="flex-none w-40 h-20 relative opacity-70 hover:opacity-100 transition-opacity">
+                           {formattedLogoUrl && <Image src={formattedLogoUrl} alt={p.name} fill className="object-contain" />}
+                         </div>
+                       );
+                     })}
+                   </>
                  );
-               })}
-               {[...Array(20)].map((_, i) => {
-                 const num = ((i % 34) + 1).toString().padStart(3, '0');
-                 return (
-                   <div key={`dup-${i}`} className="flex-none w-40 h-20 relative opacity-70 hover:opacity-100 transition-opacity">
-                     <Image src={`/images/partners/DM_20250114154507_${num}.png`} alt={`Partner ${i+1}`} fill className="object-contain" />
-                   </div>
-                 );
-               })}
+               })()}
             </div>
          </div>
       </section>

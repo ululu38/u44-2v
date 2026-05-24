@@ -80,6 +80,7 @@ h1, h2, h3, h4, h5, h6, p, li, span {
 a {
   color: var(--accent);
   transition: color 0.2s;
+  text-decoration: none !important;
 }
 
 a:hover {
@@ -156,6 +157,7 @@ input, textarea, select {
 }
 
 .prose a {
+  text-decoration: underline !important;
   text-decoration-color: var(--accent);
   text-underline-offset: 4px;
   transition: all 0.2s;

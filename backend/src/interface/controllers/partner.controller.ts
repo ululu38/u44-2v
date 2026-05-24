@@ -8,6 +8,7 @@ import { RolesGuard } from '../../infrastructure/auth/guards/roles.guard.js';
 import { Roles } from '../../infrastructure/auth/decorators/roles.decorator.js';
 import { CreatePartnerDto, UpdatePartnerDto } from '../dtos/partner.dto.js';
 import { Query } from '@nestjs/common';
+import { transformMedia } from '../../infrastructure/media/media.service.js';
 
 @ApiTags('partners')
 @Controller('partners')
@@ -35,6 +36,9 @@ export class PartnerController {
     const offset = (p - 1) * l;
 
     const data = await this.drizzle.db.query.partners.findMany({
+      with: {
+        logoMedia: true,
+      },
       limit: l,
       offset: offset,
       orderBy: [asc(partners.displayOrder)],

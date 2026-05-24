@@ -220,10 +220,13 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
               />
             ) : (
               <TextBlock 
-                content={block.content} 
-                type={block.type}
-                metadata={block.metadata}
-                onChange={(content) => updateBlock(block.id, { content })}
+                id={block.id}
+                type={block.type === 'heading' ? (`h${block.metadata?.level || 2}` as any) : 'p'}
+                content={block.content}
+                marginTop={0}
+                marginBottom={0}
+                onUpdate={(updates: any) => updateBlock(block.id, updates as any)}
+                onRemove={() => deleteBlock(block.id)}
               />
             )}
           </div>

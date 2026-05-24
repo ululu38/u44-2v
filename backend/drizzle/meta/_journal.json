@@ -71,6 +71,34 @@
       "when": 1779097285993,
       "tag": "0009_next_maverick",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1779429413772,
+      "tag": "0010_add_hashtags",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1779466642683,
+      "tag": "0011_cultured_celestials",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1779468123456,
+      "tag": "0012_add_client_to_posts",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1779468234567,
+      "tag": "0013_post_clients_m2m",
+      "breakpoints": true
     }
   ]
 }

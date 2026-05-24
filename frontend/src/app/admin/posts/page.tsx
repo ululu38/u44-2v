@@ -1,18 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import PostEditor from "@/components/common/PostEditor";
 import MediaGallery from "@/components/common/MediaGallery";
+import HashtagsInput from "@/components/common/HashtagsInput";
 
 const CATEGORIES = [
-  { id: 1, name: 'Movement' },
+  { id: 1, name: 'News' },
   { id: 2, name: 'Solution' },
-  { id: 3, name: 'Product' },
-  { id: 4, name: 'Project' },
+  { id: 3, name: 'Project' },
+  { id: 4, name: 'Product' },
   { id: 5, name: 'Services' },
-  { id: 6, name: 'News' },
+  { id: 6, name: 'Movement' },
   { id: 7, name: 'Solution News' }
 ];
+
+interface Client {
+  clientId: number;
+  name: string;
+}
 
 interface Post {
   postId: number;
@@ -26,6 +33,8 @@ interface Post {
   thumbnailMedia?: any;
   sliderImages?: any[];
   categoryIds?: number[];
+  clientIds?: number[];
+  clients?: Client[];
   createdAt: string;
   updatedAt: string;
 }
@@ -47,10 +56,36 @@ export default function PostsPage() {
   const [uploading, setUploading] = useState(false);
   const [showThumbGallery, setShowThumbGallery] = useState(false);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
+  const [thumbnailMediaId, setThumbnailMediaId] = useState<number | null>(null);
   const [postTitle, setPostTitle] = useState('');
   const [showSliderGallery, setShowSliderGallery] = useState(false);
   const [sliderImages, setSliderImages] = useState<any[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClientIds, setSelectedClientIds] = useState<number[]>([]);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients?limit=100`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setClients(result.data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    fetchClients();
+  }, []);
 
 
 
@@ -80,10 +115,7 @@ export default function PostsPage() {
   }, [currentPage]);
 
   const handleThumbSelect = (media: any) => {
-    const mediaIdInput = document.getElementById('thumbnailMediaId') as HTMLInputElement;
-    if (mediaIdInput) {
-      mediaIdInput.value = media.id;
-    }
+    setThumbnailMediaId(media.id);
     setThumbPreview(media.urlFull);
     setShowThumbGallery(false);
   };
@@ -117,8 +149,7 @@ export default function PostsPage() {
     if (sliderImages.length > 0) {
       const firstImg = sliderImages[0];
       setThumbPreview(firstImg.urlFull);
-      const mediaIdInput = document.getElementById('thumbnailMediaId') as HTMLInputElement;
-      if (mediaIdInput) mediaIdInput.value = firstImg.id;
+      setThumbnailMediaId(firstImg.id);
     }
   };
 
@@ -143,12 +174,10 @@ export default function PostsPage() {
       data.status = parseInt(data.status);
     }
 
-    // Add slider image IDs
+    // Add slider image IDs and clients/tags
     data.sliderImageIds = sliderImages.map(img => img.id);
-
-    if (typeof data.tags === 'string') {
-      data.tags = data.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t !== "");
-    }
+    data.clientIds = selectedClientIds;
+    data.tags = selectedTags;
 
     const method = editingPost ? 'PATCH' : 'POST';
     const url = editingPost 
@@ -198,14 +227,21 @@ export default function PostsPage() {
         
         // Reset states first to prevent any leaks
         setThumbPreview(null);
+        setThumbnailMediaId(null);
         setPostTitle('');
         setSliderImages([]);
         setSelectedCategoryIds([]);
+        setSelectedClientIds([]);
+        setClientSearchQuery("");
+        setShowClientDropdown(false);
         
         // Load actual fields cleanly
         setEditingPost(fullPost);
         if (fullPost.thumbnailMedia) {
           setThumbPreview(fullPost.thumbnailMedia.urlFull);
+        }
+        if (fullPost.thumbnailMediaId) {
+          setThumbnailMediaId(fullPost.thumbnailMediaId);
         }
         if (fullPost.title) {
           setPostTitle(fullPost.title);
@@ -215,6 +251,16 @@ export default function PostsPage() {
         }
         if (fullPost.categoryIds) {
           setSelectedCategoryIds(fullPost.categoryIds);
+        }
+        if (fullPost.tags) {
+          setSelectedTags(fullPost.tags);
+        } else {
+          setSelectedTags([]);
+        }
+        if (fullPost.clients) {
+          setSelectedClientIds(fullPost.clients.map((c: any) => c.clientId));
+        } else {
+          setSelectedClientIds([]);
         }
       }
     } catch (err) {
@@ -227,9 +273,14 @@ export default function PostsPage() {
   const startCreating = () => {
     setEditingPost(null);
     setThumbPreview(null);
+    setThumbnailMediaId(null);
     setPostTitle('');
     setSliderImages([]);
     setSelectedCategoryIds([]);
+    setSelectedTags([]);
+    setSelectedClientIds([]);
+    setClientSearchQuery("");
+    setShowClientDropdown(false);
     setIsCreating(true);
   };
 
@@ -250,8 +301,13 @@ export default function PostsPage() {
             setEditingPost(null); 
             setIsCreating(false); 
             setThumbPreview(null); 
+            setThumbnailMediaId(null);
             setPostTitle(''); 
             setSliderImages([]);
+            setSelectedTags([]);
+            setSelectedClientIds([]);
+            setClientSearchQuery("");
+            setShowClientDropdown(false);
           }} className="text-gray-400 hover:text-red-500 transition-colors absolute right-12 top-12">
 
 
@@ -281,7 +337,10 @@ export default function PostsPage() {
                     <img src={thumbPreview.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${thumbPreview}` : thumbPreview} alt="Thumbnail Preview" className="w-full h-full object-cover" />
                     <button 
                       type="button" 
-                      onClick={() => setThumbPreview(null)}
+                      onClick={() => {
+                        setThumbPreview(null);
+                        setThumbnailMediaId(null);
+                      }}
                       className="absolute inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold"
                     >
                       Remove
@@ -312,9 +371,9 @@ export default function PostsPage() {
 
             <input 
               type="hidden" 
-              id="thumbnailMediaId" 
               name="thumbnailMediaId" 
-              defaultValue={(post as any).thumbnailMediaId || ''} 
+              value={thumbnailMediaId ?? ''} 
+              readOnly
             />
           </div>
 
@@ -369,8 +428,7 @@ export default function PostsPage() {
                       type="button"
                       onClick={() => {
                         setThumbPreview(img.urlFull);
-                        const mediaIdInput = document.getElementById('thumbnailMediaId') as HTMLInputElement;
-                        if (mediaIdInput) mediaIdInput.value = img.id;
+                        setThumbnailMediaId(img.id);
                       }}
                       className="w-full bg-white/20 hover:bg-white/40 backdrop-blur-md text-white py-2 rounded-lg text-[10px] font-extrabold transition-all border border-white/30 tracking-wider shadow-xl active:scale-95"
                     >
@@ -387,17 +445,19 @@ export default function PostsPage() {
             </div>
           </div>
 
-          {showThumbGallery && (
-            <MediaGallery isModal={true} onSelect={handleThumbSelect} onClose={() => setShowThumbGallery(false)} />
+          {showThumbGallery && mounted && createPortal(
+            <MediaGallery isModal={true} onSelect={handleThumbSelect} onClose={() => setShowThumbGallery(false)} />,
+            document.body
           )}
           
-          {showSliderGallery && (
+          {showSliderGallery && mounted && createPortal(
             <MediaGallery 
               isModal={true} 
               allowMultiple={true}
               onSelectMultiple={handleSliderSelectMultiple} 
               onClose={() => setShowSliderGallery(false)} 
-            />
+            />,
+            document.body
           )}
 
 
@@ -443,7 +503,79 @@ export default function PostsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <label className="block text-sm font-bold text-gray-700 mb-3">Hashtags:</label>
+            <HashtagsInput value={selectedTags} onChange={setSelectedTags} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-2">ลูกค้า (Clients):</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {selectedClientIds.map(cId => {
+                  const client = clients.find(c => c.clientId === cId);
+                  if (!client) return null;
+                  return (
+                    <span key={cId} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="material-icons text-xs">business</span>
+                      {client.name}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedClientIds(prev => prev.filter(id => id !== cId))}
+                        className="text-amber-500 hover:text-amber-700 font-extrabold focus:outline-none ml-1 text-xs"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  );
+                })}
+                {selectedClientIds.length === 0 && (
+                  <span className="text-xs text-gray-400 italic">ไม่ได้เลือกลูกค้า (บทความทั่วไป)</span>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="ค้นหาลูกค้าเพื่อเลือก..."
+                  value={clientSearchQuery}
+                  onChange={(e) => {
+                    setClientSearchQuery(e.target.value);
+                    setShowClientDropdown(true);
+                  }}
+                  onFocus={() => setShowClientDropdown(true)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded focus:border-blue-500 outline-none bg-white text-gray-700 text-sm"
+                />
+                {showClientDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowClientDropdown(false)} />
+                    <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto z-20">
+                      {clients
+                        .filter(c => c.name.toLowerCase().includes(clientSearchQuery.toLowerCase()))
+                        .filter(c => !selectedClientIds.includes(c.clientId))
+                        .map(c => (
+                          <button
+                            key={c.clientId}
+                            type="button"
+                            onClick={() => {
+                              setSelectedClientIds([...selectedClientIds, c.clientId]);
+                              setClientSearchQuery("");
+                              setShowClientDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-blue-50 text-sm text-gray-700 transition-colors border-b last:border-b-0 border-gray-100 flex items-center gap-2"
+                          >
+                            <span className="material-icons text-gray-400 text-sm">business</span>
+                            {c.name}
+                          </button>
+                        ))}
+                      {clients.filter(c => c.name.toLowerCase().includes(clientSearchQuery.toLowerCase())).filter(c => !selectedClientIds.includes(c.clientId)).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-gray-400 italic">ไม่พบรายชื่อลูกค้าที่ต้องการค้นหา</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-600 mb-2">Status:</label>
               <select name="status" defaultValue={post.status} className="w-full px-4 py-3 border border-gray-300 rounded focus:border-blue-500 outline-none bg-white">
@@ -501,7 +633,13 @@ export default function PostsPage() {
 
                     <div className="flex flex-col gap-1">
                       <span className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{post.title}</span>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1 items-center">
+                        {post.clients && post.clients.map(client => (
+                          <span key={client.clientId} className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100 uppercase tracking-wider flex items-center gap-1">
+                            <span className="material-icons text-[10px]">business</span>
+                            {client.name}
+                          </span>
+                        ))}
                         {post.categoryIds && post.categoryIds.map(cid => {
                           const cat = CATEGORIES.find(c => c.id === cid);
                           return cat ? (

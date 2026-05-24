@@ -3,16 +3,50 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+interface Partner {
+  partnerId: number;
+  name: string;
+  logoMedia?: any;
+  description?: string;
+  displayOrder?: number;
+}
+
 export default function PartnerPage() {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
+
+    const fetchPartners = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/partners?page=1&limit=100`);
+        if (response.ok) {
+          const result = await response.json();
+          setPartners(result.data);
+        }
+      } catch (err) {
+        console.error("Error fetching partners:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPartners();
   }, []);
 
-  const partners = [...Array(34)].map((_, i) => 
-    `DM_20250114154507_${(i + 1).toString().padStart(3, '0')}.png`
-  );
+  const staticPartners = [...Array(34)].map((_, i) => {
+    const num = (i + 1).toString().padStart(3, '0');
+    return {
+      partnerId: -i,
+      name: `Partner ${i + 1}`,
+      logoMedia: { urlFull: `/images/partners/DM_20250114154507_${num}.png` },
+      description: '',
+      displayOrder: i
+    };
+  });
+
+  const displayPartners = loading ? [] : (partners.length > 0 ? partners : staticPartners);
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-white pb-24 pt-0 overflow-x-hidden">
@@ -51,22 +85,32 @@ export default function PartnerPage() {
       {/* Partner Grid */}
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-          {partners.map((name, idx) => (
-            <div 
-              key={idx} 
-              className={`group bg-[#151517] backdrop-blur-sm p-8 rounded-2xl flex items-center justify-center border border-white/5 hover:border-blue-500/50 transition-all duration-500 hover:bg-[#1a1a1c] aspect-video relative transition-all transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-              style={{ transitionDelay: `${idx * 30}ms` }}
-            >
+          {displayPartners.map((p, idx) => {
+            const logoUrl = p.logoMedia?.urlMini || p.logoMedia?.urlThumb || p.logoMedia?.urlFull || '';
+            const formattedLogoUrl = logoUrl.startsWith('/') && !logoUrl.startsWith('/images/') 
+              ? `${process.env.NEXT_PUBLIC_API_URL}${logoUrl}` 
+              : logoUrl;
+
+            return (
+              <div 
+                key={p.partnerId} 
+                className={`group bg-[#151517] backdrop-blur-sm p-8 rounded-2xl flex items-center justify-center border border-white/5 hover:border-blue-500/50 transition-all duration-500 hover:bg-[#1a1a1c] aspect-video relative transition-all transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                style={{ transitionDelay: `${idx * 30}ms` }}
+                title={p.description || p.name}
+              >
                 <div className="relative w-full h-full">
-                  <Image 
-                    src={`/images/partners/${name}`} 
-                    alt={`Partner Logo ${idx + 1}`}
-                    fill
-                    className="object-contain group-hover:scale-110 transition-all duration-500"
-                  />
+                  {formattedLogoUrl && (
+                    <Image 
+                      src={formattedLogoUrl} 
+                      alt={p.name}
+                      fill
+                      className="object-contain group-hover:scale-110 transition-all duration-500"
+                    />
+                  )}
                 </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </div>
 
