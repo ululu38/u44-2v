@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -55,10 +56,12 @@ export default function PostsSearchUI({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const itemsPerPage = 6;
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (isSearching) return;
@@ -102,7 +105,7 @@ export default function PostsSearchUI({
       setIsSearching(true);
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        let url = `${apiUrl}/posts?page=${page}&limit=${itemsPerPage}&status=1`;
+        let url = `${apiUrl}/posts?page=${page}&limit=${itemsPerPage}&status=1&fields=postId,title,slug,tags,contentText,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
         if (keyword) url += `&q=${encodeURIComponent(keyword)}`;
         if (tag !== null && tag !== 'all') url += `&tag=${encodeURIComponent(tag)}`;
 
@@ -143,6 +146,55 @@ export default function PostsSearchUI({
     return () => clearTimeout(timeoutId);
   }, [keyword, tag, page]);
 
+  // reset selection when posts change
+  useEffect(() => { setSelectedIndex(-1); }, [posts]);
+
+  const router = useRouter();
+
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(prev + 1, posts.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(prev - 1, -1));
+    } else if (e.key === "Enter") {
+      if (selectedIndex >= 0 && posts[selectedIndex]) {
+        const p = posts[selectedIndex];
+        router.push(`/posts/${p.slug || p.id}`);
+      }
+    }
+  };
+
+  // fallback: listen on window when input is focused (helps with some IME or focus edge cases)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (document.activeElement !== inputRef.current) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prev) => Math.min(prev + 1, posts.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+      } else if (e.key === "Enter") {
+        if (selectedIndex >= 0 && posts[selectedIndex]) {
+          const p = posts[selectedIndex];
+          router.push(`/posts/${p.slug || p.id}`);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [posts, selectedIndex, router]);
+
+  // scroll selected item into view
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      const el = document.querySelector(`[data-index=\"${selectedIndex}\"]`) as HTMLElement | null;
+      if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [selectedIndex]);
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl">
       {/* Header section */}
@@ -173,6 +225,8 @@ export default function PostsSearchUI({
                 setKeyword(e.target.value);
                 setPage(1);
               }}
+              onKeyDown={onInputKeyDown}
+              ref={inputRef}
               className="w-full bg-[#151517] border border-white/10 text-white rounded-lg px-5 py-3 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-500"
             />
             {isSearching && (
@@ -221,11 +275,17 @@ export default function PostsSearchUI({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
+          {posts.map((post, idx) => (
             <Link 
               href={`/posts/${post.slug || post.id}`} 
               key={post.id}
-              className="block aspect-[3/2] group relative rounded-md overflow-hidden border-1 border-gray-600 transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)] bg-[#151517]"
+              data-index={idx}
+              className={
+                `block aspect-[3/2] group relative rounded-md overflow-hidden border-1 border-gray-600 transition-all duration-300 bg-[#151517]` +
+                (selectedIndex === idx ? " ring-2 ring-blue-500/60 z-20 transform -translate-y-1 shadow-[0_10px_40px_rgba(59,130,246,0.18)]" : " hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(59,130,246,0.25)]")
+              }
+              onMouseEnter={() => setSelectedIndex(idx)}
+              onMouseLeave={() => setSelectedIndex(-1)}
               style={{ transform: "translateZ(0)", willChange: "transform" }}
             >
               <div className="w-full h-full flex flex-col justify-end relative">

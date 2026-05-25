@@ -99,7 +99,7 @@ export default function PostsPage() {
   const fetchPosts = async (page = 1) => {
     setLoading(true);
     try {
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/posts?page=${page}&limit=10`;
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/posts?page=${page}&limit=10&fields=postId,title,slug,tags,status,views,createdAt,updatedAt,thumbnailMedia,clients&thumbSize=thumb`;
       if (filterKeyword) url += `&q=${encodeURIComponent(filterKeyword)}`;
       if (filterTag && filterTag !== "all") url += `&tag=${encodeURIComponent(filterTag)}`;
       if (filterStatus && filterStatus !== "all") url += `&status=${filterStatus}`;

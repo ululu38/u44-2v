@@ -261,7 +261,7 @@ export default function SolutionPage() {
   // ── Fetch hero (latest solutions, no tag filter)
   useEffect(() => {
     document.title = "U44 Technology Solutions | Solutions";
-    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1`)
+    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1&fields=postId,title,slug,tags,contentText,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then((r) => r.json())
       .then((d) => setHeroPost(d.data || []))
       .catch(() => {});
@@ -271,7 +271,7 @@ export default function SolutionPage() {
   const fetchGrid = useCallback(async (tab: string, pageNum: number) => {
     setLoading(true);
     try {
-      const url = `${API}/posts?page=${pageNum}&limit=12&tag=${SOLUTION_TAG}&q=${encodeURIComponent(tab)}&status=1`;
+      const url = `${API}/posts?page=${pageNum}&limit=12&tag=${SOLUTION_TAG}&q=${encodeURIComponent(tab)}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
       const r = await fetch(url);
       const d = await r.json();
       const newPosts = d.data || [];

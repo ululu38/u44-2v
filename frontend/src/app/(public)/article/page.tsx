@@ -178,7 +178,7 @@ function ArticleSection({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=8&tag=${tag}&status=1`)
+    fetch(`${API}/posts?page=1&limit=8&tag=${tag}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia&thumbSize=thumb`)
       .then((r) => r.json())
       .then((d) => setPosts(d.data || []))
       .catch(() => {})
@@ -237,7 +237,7 @@ export default function ArticlePage() {
   // Fetch recent posts across all categories for hot topic swiper
   useEffect(() => {
     document.title = "U44 Technology Solutions | Articles & News";
-    fetch(`${API}/posts?page=1&limit=6&status=1`)
+    fetch(`${API}/posts?page=1&limit=6&status=1&fields=postId,title,slug,tags,contentText,createdAt,thumbnailMedia&thumbSize=thumb`)
       .then((r) => r.json())
       .then((d) => setHotPosts(d.data || []))
       .catch(() => {});

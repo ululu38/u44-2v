@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
@@ -37,8 +37,10 @@ function imgUrl(p?: string | null) {
 }
 
 // ── Horizontal scrolling card row ─────────────────────────────────────────
-function ProjectCardRow({ post }: { post: Post }) {
-  const thumb = imgUrl(post.thumbnailMedia?.urlThumb ?? post.thumbnailMedia?.urlFull);
+function ProjectCardRow({ post, imgCache }: { post: Post; imgCache: Record<string, string> }) {
+  const thumbUrl = imgUrl(post.thumbnailMedia?.urlThumb ?? post.thumbnailMedia?.urlFull);
+  // use cached blob URL if available, otherwise use original URL
+  const displayThumb = (thumbUrl && imgCache[thumbUrl]) ? imgCache[thumbUrl] : thumbUrl;
   const clientTag = post.clients?.[0]?.name ?? null;
 
   return (
@@ -52,9 +54,9 @@ function ProjectCardRow({ post }: { post: Post }) {
       >
         {/* Thumbnail */}
         <div className="relative aspect-[4/3] overflow-hidden bg-[#111] rounded-t-[inherit]">
-          {thumb ? (
+          {displayThumb ? (
             <img
-              src={thumb}
+              src={displayThumb}
               alt={post.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-t-[inherit]"
               loading="lazy"
@@ -66,7 +68,7 @@ function ProjectCardRow({ post }: { post: Post }) {
           )}
           {/* Client tag badge */}
           {clientTag && (
-            <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-[10px] text-gray-300 px-2 py-0.5 rounded-full border border-white/10">
+            <span className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-[10px] text-gray-100 px-2 py-0.5 rounded-full border border-white/10">
               {clientTag}
             </span>
           )}
@@ -99,19 +101,28 @@ export default function ProjectPage() {
   // sidebar state
   const [allClients,   setAllClients]   = useState<{ id: number; name: string; count: number }[]>([]);
   const [allCompanies, setAllCompanies] = useState<{ id: number; name: string; count: number }[]>([]);
+  const [companyGroups, setCompanyGroups] = useState<Record<number, number[]>>({});
   const [selClients,   setSelClients]   = useState<Set<number>>(new Set());
   const [selCompanies, setSelCompanies] = useState<Set<number>>(new Set());
+
+  // cache: { "tabName:pageNum": { posts, meta } }
+  const cacheRef = useRef<Record<string, { posts: Post[]; meta: Meta | null }>>({});
+  // store page number per tab
+  const tabPageRef = useRef<Record<string, number>>({});
+  // image blob cache: { urlThumb: blobUrl, ... }
+  const imgCacheRef = useRef<Record<string, string>>({});
 
   // ── Build sidebar from posts ─────────────────────────────────────────
   useEffect(() => {
     document.title = "U44 Technology Solutions | Projects";
     // fetch ALL posts once to build sidebar counters (limit=200 should be enough)
-    fetch(`${API}/posts?page=1&limit=200&tag=${PROJECT_TAG}&status=1`)
+    fetch(`${API}/posts?page=1&limit=200&tag=${PROJECT_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then(r => r.json())
       .then(d => {
         const data: Post[] = d.data || [];
         const groupMap = new Map<number, { name: string; count: number }>();
         const companyMap = new Map<number, { name: string; count: number }>();
+        const cgMap = new Map<number, Set<number>>();
         
         data.forEach(p => {
           (p.clients || []).forEach(c => {
@@ -127,6 +138,9 @@ export default function ProjectPage() {
                 groupMap.set(g.groupId, { name: g.name, count: 0 });
               }
               groupMap.get(g.groupId)!.count++;
+              // record mapping client -> group
+              if (!cgMap.has(c.clientId)) cgMap.set(c.clientId, new Set());
+              cgMap.get(c.clientId)!.add(g.groupId);
             });
           });
         });
@@ -136,27 +150,57 @@ export default function ProjectPage() {
         
         setAllClients(groups);
         setAllCompanies(companies);
+        // convert cgMap to plain object
+        const cgObj: Record<number, number[]> = {};
+        cgMap.forEach((s, id) => { cgObj[id] = [...s]; });
+        setCompanyGroups(cgObj);
       })
       .catch(() => {});
   }, []);
 
+  // derive companies to display based on selected client groups
+  const displayedCompanies = useMemo(() => {
+    if (selClients.size === 0) return allCompanies;
+    const sel = Array.from(selClients);
+    return allCompanies.filter(c => {
+      const groups = companyGroups[c.id] || [];
+      return groups.some(gid => sel.includes(gid));
+    });
+  }, [allCompanies, selClients, companyGroups]);
+
   // ── Fetch filtered posts ─────────────────────────────────────────────
   const fetchPosts = useCallback(async (tab: string, pageNum: number) => {
+    const cacheKey = `${tab}:${pageNum}`;
+    
+    // check if we have cached data for this tab+page
+    if (cacheRef.current[cacheKey]) {
+      const { posts: cachedPosts, meta: cachedMeta } = cacheRef.current[cacheKey];
+      setPosts(cachedPosts);
+      setMeta(cachedMeta);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const url = `${API}/posts?page=${pageNum}&limit=20&tag=${PROJECT_TAG}${tab ? `&q=${encodeURIComponent(tab)}` : ""}&status=1`;
+      const url = `${API}/posts?page=${pageNum}&limit=20&tag=${PROJECT_TAG}${tab ? `&q=${encodeURIComponent(tab)}` : ""}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
       const r = await fetch(url);
       const d = await r.json();
       const newPosts: Post[] = d.data || [];
+      const newMeta: Meta | null = d.meta || null;
+
       if (pageNum === 1) {
         setPosts(newPosts);
+        cacheRef.current[cacheKey] = { posts: newPosts, meta: newMeta };
       } else {
         setPosts(prev => {
           const ids = new Set(prev.map(p => p.postId));
-          return [...prev, ...newPosts.filter(p => !ids.has(p.postId))];
+          const allPosts = [...prev, ...newPosts.filter(p => !ids.has(p.postId))];
+          cacheRef.current[cacheKey] = { posts: allPosts, meta: newMeta };
+          return allPosts;
         });
       }
-      setMeta(d.meta || null);
+      setMeta(newMeta);
     } catch {
       if (pageNum === 1) setPosts([]);
     } finally {
@@ -164,13 +208,66 @@ export default function ProjectPage() {
     }
   }, []);
 
-  useEffect(() => { fetchPosts(activeTab, page); }, [activeTab, page, fetchPosts]);
+  useEffect(() => { 
+    // when tab changes, restore its page
+    const restoredPage = tabPageRef.current[activeTab] || 1;
+    if (restoredPage !== page) {
+      setPage(restoredPage);
+    } else {
+      // fetch only if page doesn't change (avoid double fetch)
+      const cacheKey = `${activeTab}:${restoredPage}`;
+      if (!cacheRef.current[cacheKey]) {
+        fetchPosts(activeTab, restoredPage);
+      } else {
+        // restore from cache immediately
+        const { posts: cachedPosts, meta: cachedMeta } = cacheRef.current[cacheKey];
+        setPosts(cachedPosts);
+        setMeta(cachedMeta);
+      }
+    }
+  }, [activeTab]);
+
+  useEffect(() => { 
+    // when page changes, fetch
+    const cacheKey = `${activeTab}:${page}`;
+    if (!cacheRef.current[cacheKey]) {
+      fetchPosts(activeTab, page);
+    } else {
+      // restore from cache
+      const { posts: cachedPosts, meta: cachedMeta } = cacheRef.current[cacheKey];
+      setPosts(cachedPosts);
+      setMeta(cachedMeta);
+      setLoading(false);
+    }
+  }, [page]);
+
+  // ── Preload and cache images ─────────────────────────────────────
+  useEffect(() => {
+    posts.forEach(post => {
+      const thumbUrl = imgUrl(post.thumbnailMedia?.urlThumb ?? post.thumbnailMedia?.urlFull);
+      if (thumbUrl && !imgCacheRef.current[thumbUrl]) {
+        fetch(thumbUrl)
+          .then(r => r.blob())
+          .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            imgCacheRef.current[thumbUrl] = blobUrl;
+          })
+          .catch(() => {}); // silently fail, will use original URL
+      }
+    });
+  }, [posts]);
 
   const handleTabClick = (label: string) => {
     if (label === activeTab) return;
-    setPage(1);
+    
+    // save current page for active tab
+    tabPageRef.current[activeTab] = page;
+    
+    // restore page for new tab, default to 1
+    const restoredPage = tabPageRef.current[label] || 1;
+    
     setActiveTab(label);
-    setPosts([]);
+    setPage(restoredPage);
   };
 
   // sidebar filter logic (client-side filter on already-fetched posts)
@@ -206,69 +303,25 @@ export default function ProjectPage() {
   return (
     <div className="min-h-screen text-white" style={{ background: "#0f1117", paddingTop: "80px" }}>
 
-      {/* ── Sub-navbar ───────────────────────────────────────────────── */}
-      <div style={{
-        background: "rgba(20,22,30,0.96)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        position: "sticky",
-        top: "80px",
-        zIndex: 30,
-      }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", gap: 8, overflowX: "auto" }} className="no-scrollbar">
-          {/* Title */}
-          <span style={{ fontWeight: 700, fontSize: 20, color: "#fff", marginRight: 16, whiteSpace: "nowrap", padding: "14px 0" }}>
-            Project
-          </span>
-
-          {PROJECT_TABS.map(tab => {
-            const isActive = activeTab === tab.label;
-            return (
-              <button
-                key={tab.label || "all"}
-                onClick={() => handleTabClick(tab.label)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "10px 14px",
-                  borderRadius: 0,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                  cursor: "pointer",
-                  border: "none",
-                  borderBottom: isActive ? "2px solid #3b82f6" : "2px solid transparent",
-                  background: "transparent",
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.45)",
-                  transition: "all .2s",
-                }}
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = "#fff"; }}
-                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)"; }}
-              >
-                <span className="material-icons" style={{ fontSize: 16 }}>{tab.icon}</span>
-                {tab.label || "All"}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── Body: sidebar + content ──────────────────────────────────── */}
       <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", gap: 0, alignItems: "flex-start", padding: "0 0" }}>
 
         {/* Sidebar */}
         <aside style={{
-          width: 220,
+          width: 240,
           flexShrink: 0,
-          padding: "24px 16px",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
-          minHeight: "calc(100vh - 140px)",
+          padding: "32px 20px",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          minHeight: "calc(100vh - 100px)",
           position: "sticky",
-          top: 140,
-          maxHeight: "calc(100vh - 140px)",
+          top: 80,
+          maxHeight: "calc(100vh - 100px)",
           overflowY: "auto",
         }} className="no-scrollbar">
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', marginBottom: 8, lineHeight: 1.1 }}>Project</div>
+
+          </div>
 
           {/* Clients group */}
           {allClients.length > 0 && (
@@ -298,14 +351,14 @@ export default function ProjectPage() {
           )}
 
           {/* Company group */}
-          {allCompanies.length > 0 && (
+          {displayedCompanies.length > 0 && (
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.7)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Company</span>
                 <span className="material-icons" style={{ fontSize: 16, color: "rgba(255,255,255,0.3)" }}>expand_less</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {allCompanies.map(c => (
+                {displayedCompanies.map(c => (
                   <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 6px", borderRadius: 6, transition: "background .15s" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
@@ -327,6 +380,39 @@ export default function ProjectPage() {
 
         {/* Main content */}
         <main style={{ flex: 1, padding: "28px 28px 60px", minWidth: 0 }}>
+          <div style={{ marginBottom: 26, paddingBottom: 14, position: 'sticky', top: 80, zIndex: 25 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', overflowX: 'auto', padding: '16px 0' }} className="no-scrollbar">
+              {PROJECT_TABS.map(tab => {
+                const isActive = activeTab === tab.label;
+                return (
+                  <button
+                    key={tab.label || "all"}
+                    onClick={() => handleTabClick(tab.label)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "10px 16px",
+                      borderRadius: 9999,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                      border: "none",
+                      background: isActive ? "#111" : "rgb(48, 48, 48)",
+                      color: isActive ? "#fff" : "rgba(255,255,255,0.78)",
+                      transition: "all .18s ease",
+                    }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.14)"; }}
+                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  >
+                    <span className="material-icons" style={{ fontSize: 16 }}>{tab.icon}</span>
+                    {tab.label || "All"}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Loading skeletons */}
           {loading && (
@@ -357,7 +443,7 @@ export default function ProjectPage() {
           {!loading && filteredPosts.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24, paddingBottom: 16 }}>
               {filteredPosts.map(post => (
-                <ProjectCardRow key={post.postId} post={post} />
+                <ProjectCardRow key={post.postId} post={post} imgCache={imgCacheRef.current} />
               ))}
             </div>
           )}

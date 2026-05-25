@@ -121,7 +121,9 @@ export class PostController {
     @Query('q') q?: string,
     @Query('clientId') clientId?: string,
     @Query('tag') tag?: string,
-    @Query('status') status?: string
+    @Query('status') status?: string,
+    @Query('fields') fields?: string,
+    @Query('thumbSize') thumbSize: 'full' | 'thumb' | 'mini' = 'thumb'
   ) {
     const isLogged = !!req.user;
     if (!isLogged) {
@@ -182,37 +184,107 @@ export class PostController {
       ? [sql`similarity(${posts.title}, ${q}) DESC`] 
       : [desc(posts.createdAt)];
 
-    const data = await this.drizzle.db.query.posts.findMany({
-      where: whereClause,
-      limit: l,
-      offset: offset,
-      orderBy: orderClause,
-      with: {
-        thumbnailMedia: true,
-        clients: {
-          with: {
-            client: {
-              with: {
-                logoMedia: true,
-                groups: {
-                  with: {
-                    group: true
-                  }
+    // Dynamic columns selection logic to prevent fetching contentHtml by default
+    const columnsToSelect: any = {
+      postId: true,
+      title: true,
+      contentText: true,
+      tags: true,
+      status: true,
+      views: true,
+      slug: true,
+      thumbnailMediaId: true,
+      createdAt: true,
+      updatedAt: true,
+      contentHtml: false, // Default is false to keep queries fast!
+    };
+
+    if (fields) {
+      const requestedFields = fields.split(',').map(f => f.trim());
+      Object.keys(columnsToSelect).forEach(k => {
+        columnsToSelect[k] = false;
+      });
+      requestedFields.forEach(f => {
+        if (f === 'id' || f === 'postId') columnsToSelect.postId = true;
+        if (f === 'title') columnsToSelect.title = true;
+        if (f === 'contentText' || f === 'content-text') columnsToSelect.contentText = true;
+        if (f === 'tags') columnsToSelect.tags = true;
+        if (f === 'status') columnsToSelect.status = true;
+        if (f === 'views') columnsToSelect.views = true;
+        if (f === 'slug') columnsToSelect.slug = true;
+        if (f === 'createdAt') columnsToSelect.createdAt = true;
+        if (f === 'updatedAt') columnsToSelect.updatedAt = true;
+        if (f === 'contentHtml' || f === 'content_html' || f === 'content') columnsToSelect.contentHtml = true;
+      });
+      columnsToSelect.postId = true; // Always select ID
+    }
+
+    const wantsThumbnail = !fields || fields.includes('thumbnail') || fields.includes('thumbnailMedia') || fields.includes('thumbnailMediaId');
+    const wantsClients = !fields || fields.includes('clients');
+
+    const withRelations: any = {};
+    if (wantsThumbnail) {
+      withRelations.thumbnailMedia = true;
+    }
+    if (wantsClients) {
+      withRelations.clients = {
+        with: {
+          client: {
+            with: {
+              logoMedia: true,
+              groups: {
+                with: {
+                  group: true
                 }
               }
             }
           }
         }
-      }
+      };
+    }
+
+    const data = await this.drizzle.db.query.posts.findMany({
+      where: whereClause,
+      limit: l,
+      offset: offset,
+      orderBy: orderClause,
+      columns: columnsToSelect,
+      with: withRelations,
     });
 
     const transformPost = (postObj: any) => {
       if (!postObj) return postObj;
       const { clients: postClientsList, sliderImages, thumbnailMedia, ...rest } = postObj;
+
+      // Truncate contentText to 100 characters for list views
+      if (rest.contentText !== undefined) {
+        rest.contentText = rest.contentText ? rest.contentText.substring(0, 100) : '';
+      }
+
+      let mappedThumbnail: any = null;
+      if (thumbnailMedia) {
+        const media = transformMedia(thumbnailMedia);
+        if (media) {
+          let chosenUrl = media.urlThumb;
+          if (thumbSize === 'mini') chosenUrl = media.urlMini;
+          else if (thumbSize === 'full') chosenUrl = media.urlFull;
+          
+          mappedThumbnail = {
+            id: media.id,
+            urlThumb: chosenUrl,
+            urlFull: chosenUrl,
+            urlMini: chosenUrl,
+            blurHash: media.blurHash,
+            width: media.width,
+            height: media.height,
+          };
+        }
+      }
+
       return {
         ...rest,
         content: rest.contentHtml,
-        thumbnailMedia: transformMedia(thumbnailMedia),
+        thumbnailMedia: mappedThumbnail,
         sliderImages: sliderImages ? sliderImages.map((si: any) => ({
           ...si,
           media: transformMedia(si.media)

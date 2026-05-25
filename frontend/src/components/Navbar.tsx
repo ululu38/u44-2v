@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,8 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [showRecommendations, setShowRecommendations] = useState(false);
+  const [selectedRec, setSelectedRec] = useState<number>(-1);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,8 +40,8 @@ export default function Navbar() {
     }
     const timeoutId = setTimeout(() => {
       const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      console.log("[Search Debug] Fetching recommendations from:", `${api}/posts?page=1&limit=5&q=${query}`);
-      fetch(`${api}/posts?page=1&limit=5&q=${encodeURIComponent(query)}`)
+      console.log("[Search Debug] Fetching recommendations from:", `${api}/posts?page=1&limit=5&q=${query}&fields=postId,title,slug,createdAt,thumbnailMedia&thumbSize=mini`);
+      fetch(`${api}/posts?page=1&limit=5&q=${encodeURIComponent(query)}&fields=postId,title,slug,createdAt,thumbnailMedia&thumbSize=mini`)
         .then((r) => r.json())
         .then((d) => {
           console.log("[Search Debug] Recommendations loaded successfully:", d.data);
@@ -67,6 +69,15 @@ export default function Navbar() {
     document.addEventListener("click", handleOutsideClick);
     return () => document.removeEventListener("click", handleOutsideClick);
   }, []);
+
+  useEffect(() => { setSelectedRec(-1); }, [recommendations]);
+
+  useEffect(() => {
+    if (selectedRec >= 0) {
+      const el = document.querySelector(`[data-index="${selectedRec}"]`) as HTMLElement | null;
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+  }, [selectedRec]);
 
   return (
     <>
@@ -106,11 +117,24 @@ export default function Navbar() {
                 setQuery(e.target.value);
                 setShowRecommendations(true);
               }}
+              ref={inputRef}
               onFocus={() => setShowRecommendations(true)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setShowRecommendations(false);
-                  router.push(`/search?q=${encodeURIComponent(query)}`);
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelectedRec((s) => Math.min(s + 1, recommendations.length - 1));
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSelectedRec((s) => Math.max(s - 1, -1));
+                } else if (e.key === "Enter") {
+                  if (selectedRec >= 0 && recommendations[selectedRec]) {
+                    const p = recommendations[selectedRec];
+                    setShowRecommendations(false);
+                    router.push(`/posts/${p.slug || p.postId}`);
+                  } else {
+                    setShowRecommendations(false);
+                    router.push(`/search?q=${encodeURIComponent(query)}`);
+                  }
                 }
               }}
             />
@@ -141,7 +165,7 @@ export default function Navbar() {
                   <div className="px-3 py-1 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-white/5">
                     Recommended Posts
                   </div>
-                  {recommendations.map((post) => {
+                  {recommendations.map((post, idx) => {
                     const thumb = post.thumbnailMedia?.urlThumb || post.thumbnailMedia?.urlFull;
                     const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${thumb}`) : null;
                     return (
@@ -149,8 +173,11 @@ export default function Navbar() {
                         key={post.postId} 
                         href={`/posts/${post.slug || post.postId}`}
                         onClick={() => setShowRecommendations(false)}
-                        className="d-flex align-items-center gap-3 px-3 py-2 text-decoration-none hover-bg-custom"
+                        data-index={idx}
+                        className={`d-flex align-items-center gap-3 px-3 py-2 text-decoration-none hover-bg-custom ${selectedRec === idx ? 'bg-selected-recommend' : ''}`}
                         style={{ transition: "background 0.2s" }}
+                        onMouseEnter={() => setSelectedRec(idx)}
+                        onMouseLeave={() => setSelectedRec(-1)}
                       >
                         <div className="flex-shrink-0 rounded overflow-hidden bg-white/5" style={{ width: 44, height: 44 }}>
                           {fullThumb ? (
@@ -171,7 +198,7 @@ export default function Navbar() {
                         </div>
                       </Link>
                     );
-                  })}
+                    })}
                 </div>
               </div>
             )}
@@ -378,6 +405,11 @@ export default function Navbar() {
             position: fixed;
             top: 80px;
             right: 15px;
+        }
+
+        .bg-selected-recommend {
+          background: rgba(59,130,246,0.14) !important;
+        }
             background: #fff;
             width: 200px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);

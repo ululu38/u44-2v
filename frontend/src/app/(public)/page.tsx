@@ -224,7 +224,7 @@ function SolutionsSwiper() {
   const [visibleCount, setVisibleCount] = useState(3);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1`)
+    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {});
   }, []);
 
@@ -362,7 +362,7 @@ function ProductSection() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API}/posts?page=1&limit=4&tag=${SOLUTION_TAG}&q=${encodeURIComponent(activeTab)}&status=1`)
+    fetch(`${API}/posts?page=1&limit=4&tag=${SOLUTION_TAG}&q=${encodeURIComponent(activeTab)}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {}).finally(() => setLoading(false));
   }, [activeTab]);
 
@@ -482,7 +482,7 @@ function RecentProjects() {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=4&tag=${PROJECT_TAG}&status=1`)
+    fetch(`${API}/posts?page=1&limit=4&tag=${PROJECT_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then(r => r.json()).then(d => setPosts((d.data || []).slice(0, 4))).catch(() => {});
   }, []);
 
@@ -603,7 +603,7 @@ function LatestNews() {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=4&tag=${NEWS_TAG}&status=1`)
+    fetch(`${API}/posts?page=1&limit=4&tag=${NEWS_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {});
   }, []);
 
@@ -704,7 +704,7 @@ function CompanyMovement() {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/posts?page=1&limit=3&tag=${MOVEMENT_TAG}&status=1`)
+    fetch(`${API}/posts?page=1&limit=3&tag=${MOVEMENT_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
       .then(r => r.json()).then(d => setPosts(d.data || [])).catch(() => {});
   }, []);
 
