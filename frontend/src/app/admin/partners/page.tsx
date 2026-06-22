@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import MediaGallery from "@/components/common/MediaGallery";
+import { CachedImage } from "@/components/common/CachedImage";
 
 interface Partner {
   partnerId: number;
@@ -165,10 +166,12 @@ export default function PartnersPage() {
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white p-1">
                         {p.logoMedia ? (
-                          <img 
-                            src={(p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull).startsWith('/') && !(p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_API_URL}${p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull}` : (p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull)} 
-                            alt="" 
-                            className="w-full h-full object-contain" 
+                          <CachedImage
+                            src={(p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull).startsWith('/') && !(p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_API_URL}${p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull}` : (p.logoMedia.urlMini || p.logoMedia.urlThumb || p.logoMedia.urlFull)}
+                            alt=""
+                            className="w-full h-full object-contain"
+                            skeletonClassName="w-full h-full animate-pulse bg-gray-100"
+                            fallback={<div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">No Image</div>}
                           />
                         ) : (
                           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">No Image</div>

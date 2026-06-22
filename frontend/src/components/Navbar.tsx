@@ -405,11 +405,6 @@ export default function Navbar() {
             position: fixed;
             top: 80px;
             right: 15px;
-        }
-
-        .bg-selected-recommend {
-          background: rgba(59,130,246,0.14) !important;
-        }
             background: #fff;
             width: 200px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -437,6 +432,9 @@ export default function Navbar() {
         }
         .hover-bg-custom:hover {
             background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+        .bg-selected-recommend {
+            background: rgba(59,130,246,0.14) !important;
         }
       `}</style>
     </>

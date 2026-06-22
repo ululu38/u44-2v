@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { CachedImage } from "@/components/common/CachedImage";
+import { clientCachedFetch } from "@/lib/api/client-cache";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const SOLUTION_TAG = "Solution";
@@ -121,13 +123,17 @@ function HeroSwiper({ posts }: { posts: Post[] }) {
                 style={{ transform: "translateZ(0)", willChange: "transform" }}
               >
                 <div className="w-full h-full flex flex-col justify-end relative">
-                  {thumb ? (
-                    <img src={thumb} alt={post.title} className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-300">
-                      <span className="material-icons text-4xl">image</span>
-                    </div>
-                  )}
+                  <CachedImage
+                    src={thumb}
+                    alt={post.title}
+                    className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500"
+                    skeletonClassName="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] animate-pulse bg-white/5"
+                    fallback={
+                      <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-300">
+                        <span className="material-icons text-4xl">image</span>
+                      </div>
+                    }
+                  />
                   {/* Tighter Gradient Overlay */}
                   <div className="absolute -inset-[2px] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                   {/* Content Overlay */}
@@ -182,18 +188,17 @@ function SolutionCard({ post }: { post: Post }) {
     >
       <div className="w-full h-full flex flex-col justify-end relative">
         {/* Full Image */}
-        {thumb ? (
-          <img 
-            src={thumb} 
-            alt={post.title} 
-            className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500" 
-            loading="lazy" 
-          />
-        ) : (
-          <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-400">
-            <span className="material-icons text-5xl">image</span>
-          </div>
-        )}
+        <CachedImage
+          src={thumb}
+          alt={post.title}
+          className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] object-cover group-hover:scale-105 transition-transform duration-500"
+          skeletonClassName="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] animate-pulse bg-white/5"
+          fallback={
+            <div className="absolute -inset-[2px] w-[calc(100%+4px)] h-[calc(100%+4px)] flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 text-blue-400">
+              <span className="material-icons text-5xl">image</span>
+            </div>
+          }
+        />
 
         {/* Black Gradient Overlay */}
         <div className="absolute -inset-[2px] bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
@@ -261,8 +266,8 @@ export default function SolutionPage() {
   // ── Fetch hero (latest solutions, no tag filter)
   useEffect(() => {
     document.title = "U44 Technology Solutions | Solutions";
-    fetch(`${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1&fields=postId,title,slug,tags,contentText,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
-      .then((r) => r.json())
+    const url = `${API}/posts?page=1&limit=8&tag=${SOLUTION_TAG}&status=1&fields=postId,title,slug,tags,contentText,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
+    clientCachedFetch(url, { cacheTTL: 5 * 60 * 1000 })
       .then((d) => setHeroPost(d.data || []))
       .catch(() => {});
   }, []);
@@ -272,8 +277,7 @@ export default function SolutionPage() {
     setLoading(true);
     try {
       const url = `${API}/posts?page=${pageNum}&limit=12&tag=${SOLUTION_TAG}&q=${encodeURIComponent(tab)}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
-      const r = await fetch(url);
-      const d = await r.json();
+      const d = await clientCachedFetch(url, { cacheTTL: 5 * 60 * 1000 });
       const newPosts = d.data || [];
       if (pageNum === 1) {
         setPosts(newPosts);

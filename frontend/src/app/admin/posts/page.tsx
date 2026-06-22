@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import PostEditor from "@/components/common/PostEditor";
 import MediaGallery from "@/components/common/MediaGallery";
 import HashtagsInput from "@/components/common/HashtagsInput";
+import { CachedImage } from "@/components/common/CachedImage";
 
 const CATEGORIES = [
   { id: 1, name: 'News' },
@@ -356,7 +357,12 @@ export default function PostsPage() {
             <div className="flex items-center gap-4 mb-4">
                 {thumbPreview ? (
                   <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 group">
-                    <img src={thumbPreview.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${thumbPreview}` : thumbPreview} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                    <CachedImage 
+                      src={thumbPreview.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${thumbPreview}` : thumbPreview} 
+                      alt="Thumbnail Preview" 
+                      className="w-full h-full object-cover" 
+                      skeletonClassName="w-full h-full animate-pulse bg-gray-100"
+                    />
                     <button 
                       type="button" 
                       onClick={() => {
@@ -432,7 +438,12 @@ export default function PostsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {sliderImages.map((img) => (
                 <div key={img.id} className="group relative aspect-square bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm transition-all hover:shadow-lg">
-                  <img src={`${process.env.NEXT_PUBLIC_API_URL}${img.urlThumb}`} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" />
+                  <CachedImage 
+                    src={`${process.env.NEXT_PUBLIC_API_URL}${img.urlThumb}`} 
+                    alt="" 
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
+                    skeletonClassName="w-full h-full animate-pulse bg-gray-100"
+                  />
                   
                   {/* Delete Button - Prominent top-right */}
                   <button 
@@ -690,7 +701,12 @@ export default function PostsPage() {
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-4">
                     {post.thumbnailMedia ? (
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL}${post.thumbnailMedia.urlFull}`} alt="" className="w-12 h-12 rounded object-cover border border-gray-200" />
+                      <CachedImage 
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${post.thumbnailMedia.urlFull}`} 
+                        alt="" 
+                        className="w-12 h-12 rounded object-cover border border-gray-200" 
+                        skeletonClassName="w-12 h-12 rounded animate-pulse bg-gray-100"
+                      />
                     ) : (
                       <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-400">
                         <span className="material-symbols-outlined">image_not_supported</span>

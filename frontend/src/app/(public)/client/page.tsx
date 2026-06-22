@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { CachedImage } from "@/components/common/CachedImage";
 
 interface Client {
   clientId: number;
@@ -89,11 +90,16 @@ export default function ClientPage() {
               >
                   <div className="relative w-full h-full">
                     {formattedLogoUrl && (
-                      <Image 
+                      <CachedImage 
                         src={formattedLogoUrl} 
                         alt={c.name}
-                        fill
-                        className="object-contain filter brightness-90 group-hover:brightness-110 group-hover:scale-110 transition-all duration-500"
+                        className="w-full h-full object-contain filter brightness-90 group-hover:brightness-110 group-hover:scale-110 transition-all duration-500"
+                        skeletonClassName="absolute inset-0 animate-pulse bg-white/5"
+                        fallback={
+                          <div className="absolute inset-0 flex items-center justify-center bg-transparent text-gray-500">
+                            <span className="material-icons text-2xl">image</span>
+                          </div>
+                        }
                       />
                     )}
                   </div>

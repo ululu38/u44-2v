@@ -20,6 +20,8 @@ import { HashtagsService } from './infrastructure/search/hashtags.service.js';
 import { HashtagController } from './interface/controllers/hashtag.controller.js';
 import { ClientGroupController } from './interface/controllers/client-group.controller.js';
 import { ClientController } from './interface/controllers/client.controller.js';
+import { SearchController } from './interface/controllers/search.controller.js';
+import { UploadsController } from './interface/controllers/uploads.controller.js';
 
 
 
@@ -53,6 +55,8 @@ import { ClientController } from './interface/controllers/client.controller.js';
     HashtagController,
     ClientGroupController,
     ClientController,
+    SearchController,
+    UploadsController,
   ],
 
 

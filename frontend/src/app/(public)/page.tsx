@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { CachedImage } from "@/components/common/CachedImage";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const SOLUTION_TAG = "Solution";
@@ -295,16 +296,18 @@ function SolutionsSwiper() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
                     <div style={{ position: "absolute", inset: 0 }}>
-                      {thumb ? (
-                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                        />
-                      ) : (
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a", color: "#444" }}>
-                          <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                        </div>
-                      )}
+                      {/* SolutionsSwiper card image */}
+                      <CachedImage
+                        src={thumb}
+                        alt={post.title}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }}
+                        skeletonClassName=""
+                        fallback={
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1a1a1a", color: "#444" }}>
+                            <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                          </div>
+                        }
+                      />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
                         <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 12px", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", letterSpacing: "-0.01em" }}>
@@ -441,16 +444,18 @@ function ProductSection() {
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-6px) translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(0,0,0,0.6)"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
-                    {thumb ? (
-                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }} loading="lazy"
-                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                      />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                        <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                      </div>
-                    )}
+                    {/* ProductSection card image */}
+                    <CachedImage
+                      src={thumb}
+                      alt={post.title}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }}
+                      skeletonClassName=""
+                      fallback={
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                          <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                        </div>
+                      }
+                    />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
                       <span style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 4, marginBottom: 8 }}>{activeTab}</span>
@@ -524,16 +529,18 @@ function RecentProjects() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
                     <div style={{ position: "absolute", inset: 0 }}>
-                      {thumb ? (
-                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }} loading="lazy"
-                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                        />
-                      ) : (
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                          <span className="material-icons" style={{ fontSize: 64 }}>image</span>
-                        </div>
-                      )}
+                      {/* RecentProjects featured image */}
+                      <CachedImage
+                        src={thumb}
+                        alt={post.title}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }}
+                        skeletonClassName=""
+                        fallback={
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                            <span className="material-icons" style={{ fontSize: 64 }}>image</span>
+                          </div>
+                        }
+                      />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 24px 24px", zIndex: 2 }}>
                         <span style={{ display: "inline-block", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#aaa", fontSize: 9, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 4, marginBottom: 12 }}>Featured Project</span>
@@ -562,16 +569,18 @@ function RecentProjects() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
                     <div style={{ position: "absolute", inset: 0 }}>
-                      {thumb ? (
-                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .5s" }} loading="lazy"
-                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.06)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                        />
-                      ) : (
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                          <span className="material-icons" style={{ fontSize: 40 }}>image</span>
-                        </div>
-                      )}
+                      {/* RecentProjects right stack image */}
+                      <CachedImage
+                        src={thumb}
+                        alt={post.title}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .5s" }}
+                        skeletonClassName=""
+                        fallback={
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                            <span className="material-icons" style={{ fontSize: 40 }}>image</span>
+                          </div>
+                        }
+                      />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 18px 14px", zIndex: 2 }}>
                         <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, margin: "0 0 10px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{post.title}</p>
@@ -651,16 +660,18 @@ function LatestNews() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                   >
                     <div style={{ position: "absolute", inset: 0 }}>
-                      {thumb ? (
-                        <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }} loading="lazy"
-                          onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                        />
-                      ) : (
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                          <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                        </div>
-                      )}
+                      {/* LatestNews card image */}
+                      <CachedImage
+                        src={thumb}
+                        alt={post.title}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s" }}
+                        skeletonClassName=""
+                        fallback={
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                            <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                          </div>
+                        }
+                      />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "24px 22px 20px", zIndex: 2 }}>
                         <p style={{ color: "#fff", fontSize: 17, fontWeight: 700, margin: "0 0 14px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", letterSpacing: "-0.01em" }}>
@@ -742,16 +753,18 @@ function CompanyMovement() {
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateZ(0)"; (e.currentTarget as HTMLElement).style.borderColor = "#4b5563"; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}
                 >
                   <div style={{ position: "absolute", inset: 0 }}>
-                    {thumb ? (
-                      <img src={thumb} alt={post.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }} loading="lazy"
-                        onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.transform = ""; }}
-                      />
-                    ) : (
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
-                        <span className="material-icons" style={{ fontSize: 56 }}>image</span>
-                      </div>
-                    )}
+                    {/* CompanyMovement card image */}
+                    <CachedImage
+                      src={thumb}
+                      alt={post.title}
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transition: "transform .6s ease" }}
+                      skeletonClassName=""
+                      fallback={
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444" }}>
+                          <span className="material-icons" style={{ fontSize: 56 }}>image</span>
+                        </div>
+                      }
+                    />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }} />
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 20px 18px", zIndex: 2 }}>
                       <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, margin: "0 0 12px", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
@@ -928,12 +941,15 @@ function InfiniteSlider({ title, items, href, reverse = false }: {
         <div style={{ position: "absolute", inset: 0, right: 0, left: "auto", width: 80, background: "linear-gradient(to left, #0d0d0d, transparent)", zIndex: 2, pointerEvents: "none" }} />
         <div className={reverse ? "logo-slide-rev" : "logo-slide"} style={{ display: "flex", alignItems: "center", gap: 60, width: "fit-content" }}>
           {[...marqueeItems, ...marqueeItems].map((src, i) => (
-            <div key={i} style={{ flexShrink: 0, width: 110, height: 55, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <img src={src} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: "grayscale(100%)", opacity: 0.4, transition: "all .3s" }}
-                loading="lazy"
-                onMouseEnter={e => { (e.currentTarget as HTMLImageElement).style.filter = "grayscale(0%)"; (e.currentTarget as HTMLImageElement).style.opacity = "1"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLImageElement).style.filter = "grayscale(100%)"; (e.currentTarget as HTMLImageElement).style.opacity = "0.4"; }}
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            <div key={i} className="group/logo" style={{ flexShrink: 0, width: 110, height: 55, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+              <CachedImage
+                src={src}
+                alt=""
+                className="max-w-full max-h-full object-contain filter grayscale opacity-40 transition-all duration-300 group-hover/logo:grayscale-0 group-hover/logo:opacity-100"
+                skeletonClassName="w-[110px] h-[55px] animate-pulse bg-white/5"
+                fallback={
+                  <div style={{ display: "none" }} />
+                }
               />
             </div>
           ))}

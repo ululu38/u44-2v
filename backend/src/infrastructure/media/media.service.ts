@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as crypto from 'crypto';
 import { DrizzleService } from '../db/drizzle.service.js';
-import { media } from '../../domain/entities/schema.js';
+import { media, mediaBlobs } from '../../domain/entities/schema.js';
 import { eq, desc, count } from 'drizzle-orm';
 
 // Base path prefix for serving uploads.
@@ -36,19 +36,8 @@ export function transformMedia(row: any) {
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
-  private readonly uploadPath = path.join(process.cwd(), 'uploads');
 
-  constructor(private readonly drizzle: DrizzleService) {
-    this.ensureUploadDir();
-  }
-
-  private async ensureUploadDir() {
-    try {
-      await fs.access(this.uploadPath);
-    } catch {
-      await fs.mkdir(this.uploadPath, { recursive: true });
-    }
-  }
+  constructor(private readonly drizzle: DrizzleService) {}
 
   async processAndUpload(file: any) {
     const fileId = crypto.randomUUID();
@@ -56,29 +45,20 @@ export class MediaService {
     const baseName = path.basename(file.originalname, originalExtension).replace(/[^a-z0-9]/gi, '-').toLowerCase();
     const fileName = `${baseName}-${fileId}`;
 
-    // Physical file paths on disk (always in uploads/)
-    const originalPath = path.join(this.uploadPath, `${fileName}-original${originalExtension}`);
-    const fullPath     = path.join(this.uploadPath, `${fileName}-full.webp`);
-    const thumbPath    = path.join(this.uploadPath, `${fileName}-thumb.webp`);
-    const miniPath     = path.join(this.uploadPath, `${fileName}-mini.webp`);
-
     const image = sharp(file.buffer);
     const metadata = await image.metadata();
 
-    // 1. Save Original
-    await fs.writeFile(originalPath, file.buffer);
+    // 1. Process Full WebP (max 1920w) in-memory
+    const fullBuffer = await image.clone().resize(1920, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
 
-    // 2. Save Full WebP (max 1920w)
-    await image.resize(1920, null, { withoutEnlargement: true }).webp({ quality: 85 }).toFile(fullPath);
+    // 2. Process Thumb WebP (max 400w) in-memory
+    const thumbBuffer = await image.clone().resize(400, null, { withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
 
-    // 3. Save Thumb WebP (max 400w)
-    await image.resize(400, null, { withoutEnlargement: true }).webp({ quality: 80 }).toFile(thumbPath);
+    // 3. Process Mini WebP (max 150w) in-memory
+    const miniBuffer = await image.clone().resize(150, null, { withoutEnlargement: true }).webp({ quality: 75 }).toBuffer();
 
-    // 4. Save Mini WebP (max 150w)
-    await image.resize(150, null, { withoutEnlargement: true }).webp({ quality: 75 }).toFile(miniPath);
-
-    // 5. Generate Blur Placeholder (10x10)
-    const placeholderBuffer = await image.resize(10, 10, { fit: 'inside' }).blur(5).toBuffer();
+    // 4. Generate Blur Placeholder (10x10)
+    const placeholderBuffer = await image.clone().resize(10, 10, { fit: 'inside' }).blur(5).toBuffer();
     const placeholderBase64 = `data:image/png;base64,${placeholderBuffer.toString('base64')}`;
 
     // Store ONLY the bare filename — no path prefix
@@ -92,6 +72,15 @@ export class MediaService {
       height:    metadata.height || 0,
       fileSize:  file.size,
     }).returning();
+
+    // Store binary buffers in mediaBlobs table
+    await this.drizzle.db.insert(mediaBlobs).values({
+      id: inserted.id,
+      dataFull: fullBuffer,
+      dataThumb: thumbBuffer,
+      dataMini: miniBuffer,
+      dataOriginal: file.buffer,
+    });
 
     // Return the transformed row so callers get usable URLs
     return transformMedia(inserted);
@@ -131,22 +120,7 @@ export class MediaService {
     });
     if (!item) return null;
 
-    // Delete physical files using the bare filename (no DB path prefix needed)
-    const bare = item.urlFull.replace(/^\/+/, '').replace(/^uploads\/(?:thumbnails\/)?/, '');
-    const baseName = bare.replace(/-full\.webp$/, '');
-    const ext = path.extname(item.filename || '');
-
-    const filesToDelete = [
-      path.join(this.uploadPath, `${baseName}-full.webp`),
-      path.join(this.uploadPath, `${baseName}-thumb.webp`),
-      path.join(this.uploadPath, `${baseName}-mini.webp`),
-      path.join(this.uploadPath, `${baseName}-original${ext}`),
-    ];
-
-    for (const f of filesToDelete) {
-      try { await fs.unlink(f); } catch { /* file may not exist, ignore */ }
-    }
-
+    // Delete from media will cascade delete from mediaBlobs
     await this.drizzle.db.delete(media).where(eq(media.id, id));
     return transformMedia(item);
   }

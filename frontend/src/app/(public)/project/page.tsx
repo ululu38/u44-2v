@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
+import { CachedImage } from "@/components/common/CachedImage";
+import { clientCachedFetch } from "@/lib/api/client-cache";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const PROJECT_TAG = "Project";
@@ -37,10 +39,8 @@ function imgUrl(p?: string | null) {
 }
 
 // ── Horizontal scrolling card row ─────────────────────────────────────────
-function ProjectCardRow({ post, imgCache }: { post: Post; imgCache: Record<string, string> }) {
+function ProjectCardRow({ post }: { post: Post }) {
   const thumbUrl = imgUrl(post.thumbnailMedia?.urlThumb ?? post.thumbnailMedia?.urlFull);
-  // use cached blob URL if available, otherwise use original URL
-  const displayThumb = (thumbUrl && imgCache[thumbUrl]) ? imgCache[thumbUrl] : thumbUrl;
   const clientTag = post.clients?.[0]?.name ?? null;
 
   return (
@@ -54,18 +54,17 @@ function ProjectCardRow({ post, imgCache }: { post: Post; imgCache: Record<strin
       >
         {/* Thumbnail */}
         <div className="relative aspect-[4/3] overflow-hidden bg-[#111] rounded-t-[inherit]">
-          {displayThumb ? (
-            <img
-              src={displayThumb}
-              alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-t-[inherit]"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-blue-300/30 rounded-t-[inherit]">
-              <span className="material-icons text-5xl">image</span>
-            </div>
-          )}
+          <CachedImage
+            src={thumbUrl}
+            alt={post.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-t-[inherit]"
+            skeletonClassName="animate-pulse bg-white/5 w-full h-full"
+            fallback={
+              <div className="w-full h-full flex items-center justify-center text-blue-300/30 rounded-t-[inherit]">
+                <span className="material-icons text-5xl">image</span>
+              </div>
+            }
+          />
           {/* Client tag badge */}
           {clientTag && (
             <span className="absolute top-2 right-2 bg-black/80 backdrop-blur-sm text-[10px] text-gray-100 px-2 py-0.5 rounded-full border border-white/10">
@@ -109,15 +108,13 @@ export default function ProjectPage() {
   const cacheRef = useRef<Record<string, { posts: Post[]; meta: Meta | null }>>({});
   // store page number per tab
   const tabPageRef = useRef<Record<string, number>>({});
-  // image blob cache: { urlThumb: blobUrl, ... }
-  const imgCacheRef = useRef<Record<string, string>>({});
 
   // ── Build sidebar from posts ─────────────────────────────────────────
   useEffect(() => {
     document.title = "U44 Technology Solutions | Projects";
     // fetch ALL posts once to build sidebar counters (limit=200 should be enough)
-    fetch(`${API}/posts?page=1&limit=200&tag=${PROJECT_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`)
-      .then(r => r.json())
+    const url = `${API}/posts?page=1&limit=200&tag=${PROJECT_TAG}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
+    clientCachedFetch(url, { cacheTTL: 5 * 60 * 1000 })
       .then(d => {
         const data: Post[] = d.data || [];
         const groupMap = new Map<number, { name: string; count: number }>();
@@ -184,8 +181,7 @@ export default function ProjectPage() {
     setLoading(true);
     try {
       const url = `${API}/posts?page=${pageNum}&limit=20&tag=${PROJECT_TAG}${tab ? `&q=${encodeURIComponent(tab)}` : ""}&status=1&fields=postId,title,slug,tags,createdAt,thumbnailMedia,clients&thumbSize=thumb`;
-      const r = await fetch(url);
-      const d = await r.json();
+      const d = await clientCachedFetch(url, { cacheTTL: 5 * 60 * 1000 });
       const newPosts: Post[] = d.data || [];
       const newMeta: Meta | null = d.meta || null;
 
@@ -241,21 +237,7 @@ export default function ProjectPage() {
     }
   }, [page]);
 
-  // ── Preload and cache images ─────────────────────────────────────
-  useEffect(() => {
-    posts.forEach(post => {
-      const thumbUrl = imgUrl(post.thumbnailMedia?.urlThumb ?? post.thumbnailMedia?.urlFull);
-      if (thumbUrl && !imgCacheRef.current[thumbUrl]) {
-        fetch(thumbUrl)
-          .then(r => r.blob())
-          .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            imgCacheRef.current[thumbUrl] = blobUrl;
-          })
-          .catch(() => {}); // silently fail, will use original URL
-      }
-    });
-  }, [posts]);
+  // ── Image caching is now handled by CachedImage + useImageCache (TanStack Query) ──
 
   const handleTabClick = (label: string) => {
     if (label === activeTab) return;
@@ -443,7 +425,7 @@ export default function ProjectPage() {
           {!loading && filteredPosts.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24, paddingBottom: 16 }}>
               {filteredPosts.map(post => (
-                <ProjectCardRow key={post.postId} post={post} imgCache={imgCacheRef.current} />
+                <ProjectCardRow key={post.postId} post={post} />
               ))}
             </div>
           )}

@@ -8,11 +8,9 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
-  // เปิดใช้งาน Static Assets สำหรับรูปภาพ
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads',
-  });
-  
+  // ปิดการเสิร์ฟ Static Assets ของ NestJS เพื่อบังคับให้ใช้ Nginx แทน
+  // รูปภาพจะถูกดึงผ่าน Nginx ที่ Port 8080 แทน Port 4000
+
   // เปิดใช้งาน Cookie Parser
   app.use(cookieParser());
   
@@ -35,6 +33,7 @@ async function bootstrap() {
     .addTag('categories')
     .addTag('partners')
     .addTag('gallery')
+    .addTag('search')
     .addCookieAuth('access_token')
     .build();
   const document = SwaggerModule.createDocument(app, config);

@@ -7,17 +7,17 @@
 ## 🛠️ โหมดการรัน (Running Modes)
 
 ### 1. รันด้วย Docker Compose (แนะนำ)
-รันทุกอย่าง (Database, Backend, Frontend) ในคำสั่งเดียว:
+รันทุกอย่างในคำสั่งเดียว:
 ```bash
-docker compose --profile full up -d --build
+docker compose --profile infra --profile backend --profile frontend up -d --build
 ```
 
 ### 2. รันแยกส่วนเพื่อการพัฒนา (Manual Setup)
 
-#### **Step 1: รันฐานข้อมูล (Database)**
-รันเฉพาะ PostgreSQL และ Meilisearch:
+#### **Step 1: รันระบบพื้นฐาน (Infrastructure)**
+รันเฉพาะ PostgreSQL:
 ```bash
-docker compose --profile db up -d
+docker compose --profile infra up -d
 ```
 
 #### **Step 2: ตั้งค่า Backend (NestJS)**

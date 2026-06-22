@@ -1,5 +1,26 @@
-import { pgTable, serial, text, varchar, timestamp, integer, primaryKey, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, varchar, timestamp, integer, primaryKey, jsonb, boolean, customType } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+
+// Custom Drizzle type for PostgreSQL bytea (binary data)
+export const bytea = customType<{ data: Buffer }>({
+  dataType() {
+    return 'bytea';
+  },
+  toDriver(val: Buffer) {
+    return val;
+  },
+  fromDriver(val: any) {
+    if (Buffer.isBuffer(val)) {
+      return val;
+    }
+    // If pg driver returns it as a hex string (e.g. \x0123...), parse it.
+    if (typeof val === 'string') {
+      const hex = val.startsWith('\\x') ? val.substring(2) : val;
+      return Buffer.from(hex, 'hex');
+    }
+    return val;
+  }
+});
 
 // 1. Users Table
 export const users = pgTable('users', {
@@ -26,6 +47,16 @@ export const media = pgTable('media', {
   fileSize: integer('file_size'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// Table to store image binary data
+export const mediaBlobs = pgTable('media_blobs', {
+  id: integer('id').primaryKey().references(() => media.id, { onDelete: 'cascade' }),
+  dataFull: bytea('data_full'),
+  dataThumb: bytea('data_thumb'),
+  dataMini: bytea('data_mini'),
+  dataOriginal: bytea('data_original'),
+});
+
 
 
 // 2. Posts Table

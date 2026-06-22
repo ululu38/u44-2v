@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { CachedImage } from "@/components/common/CachedImage";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -51,11 +52,13 @@ function HotTopicSwiper({ posts }: { posts: Post[] }) {
     <div className="relative w-full rounded-md overflow-hidden border-1 border-gray-600 mb-10 shadow-2xl bg-[#151517]" style={{ height: 400, transform: "translateZ(0)", willChange: "transform" }}>
       <div className="w-full h-full relative">
         {/* Background image */}
-        {thumb ? (
-          <img src={thumb} alt={post.title} className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-900" />
-        )}
+        <CachedImage
+          src={thumb}
+          alt={post.title}
+          className="absolute inset-0 w-full h-full object-cover"
+          skeletonClassName="absolute inset-0 w-full h-full animate-pulse bg-white/5"
+          fallback={<div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-indigo-900" />}
+        />
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
@@ -100,13 +103,17 @@ function SmallCard({ post }: { post: Post }) {
         style={{ transform: "translateZ(0)", willChange: "transform" }}
       >
         <div className="flex-shrink-0 w-20 h-20 rounded-md overflow-hidden bg-blue-900/20">
-          {thumb ? (
-            <img src={thumb} alt={post.title} className="w-full h-full object-cover rounded-[inherit]" loading="lazy" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center rounded-[inherit]">
-              <span className="material-icons text-blue-300 text-2xl">image</span>
-            </div>
-          )}
+          <CachedImage
+            src={thumb}
+            alt={post.title}
+            className="w-full h-full object-cover rounded-[inherit]"
+            skeletonClassName="w-full h-full animate-pulse bg-white/5 rounded-[inherit]"
+            fallback={
+              <div className="w-full h-full flex items-center justify-center rounded-[inherit]">
+                <span className="material-icons text-blue-300 text-2xl">image</span>
+              </div>
+            }
+          />
         </div>
         <div className="flex flex-col flex-grow min-w-0">
           <h6 className="text-white/90 text-xs font-bold line-clamp-2 group-hover:text-blue-400
@@ -133,15 +140,17 @@ function BigCard({ post }: { post: Post }) {
     >
       <div className="w-full h-full flex flex-col justify-end relative">
         {/* Full Image */}
-        {thumb ? (
-          <img src={thumb} alt={post.title}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit]"
-            loading="lazy" />
-        ) : (
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center text-blue-400 rounded-[inherit]">
-            <span className="material-icons text-5xl">image</span>
-          </div>
-        )}
+        <CachedImage
+          src={thumb}
+          alt={post.title}
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-[inherit]"
+          skeletonClassName="absolute inset-0 w-full h-full animate-pulse bg-white/5"
+          fallback={
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center text-blue-400 rounded-[inherit]">
+              <span className="material-icons text-5xl">image</span>
+            </div>
+          }
+        />
 
         {/* Black Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-[inherit]" />

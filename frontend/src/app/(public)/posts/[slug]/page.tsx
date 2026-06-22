@@ -5,10 +5,19 @@ import Sqids from 'sqids';
 import OptimizedImage from '@/components/common/OptimizedImage';
 import ImageSlider from '@/components/common/ImageSlider';
 import ShareActions from '@/components/common/ShareActions';
-
+import SafeHtmlRenderer from '@/components/common/SafeHtmlRenderer';
 
 const sqids = new Sqids({ minLength: 5 });
 
+/**
+ * Fetch post with ISR caching (1 hour revalidation)
+ * 
+ * Cache Strategy:
+ * - On first request: Generate static page + cache for 1 hour
+ * - After 1 hour: Revalidate in background (stale-while-revalidate)
+ * - Users always get fast response from cache
+ * - Content updates after 1 hour automatically
+ */
 async function getPost(slug: string) {
   const parts = slug.split('-');
   const encodedId = parts.pop();
@@ -20,14 +29,20 @@ async function getPost(slug: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
   if (token) {
     headers['Cookie'] = `access_token=${token}`;
   }
 
+  // ISR: Cache for 1 hour, then revalidate in background
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/${ids[0]}`, {
-    cache: 'no-store',
-    headers
+    headers,
+    next: {
+      revalidate: 3600, // 1 hour ISR
+      tags: [`post-${ids[0]}`, 'posts'],
+    },
   });
 
   if (!res.ok) return null;
@@ -143,13 +158,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           <ImageSlider images={post.sliderImages} title={post.title} />
         )}
 
-
-        <div 
+        {/* Safe HTML rendering with image optimization */}
+        <SafeHtmlRenderer 
+          html={post.content} 
           className="prose prose-lg max-w-none text-foreground/80 leading-relaxed mt-12"
-          dangerouslySetInnerHTML={{ __html: post.content }}
         />
-
-
       </article>
     </div>
   );

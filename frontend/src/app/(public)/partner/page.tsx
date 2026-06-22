@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { clientCachedFetch } from '@/lib/api/client-cache';
+import { CachedImage } from "@/components/common/CachedImage";
 
 interface Partner {
   partnerId: number;
@@ -22,11 +24,12 @@ export default function PartnerPage() {
 
     const fetchPartners = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/partners?page=1&limit=100`);
-        if (response.ok) {
-          const result = await response.json();
-          setPartners(result.data);
-        }
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const url = `${apiUrl}/partners?page=1&limit=100`;
+
+        // Use client-side cached fetch to avoid repeated requests when navigating
+        const json = await clientCachedFetch(url, { cacheTTL: 5 * 60 * 1000 });
+        setPartners(json.data || []);
       } catch (err) {
         console.error("Error fetching partners:", err);
       } finally {
@@ -36,18 +39,9 @@ export default function PartnerPage() {
     fetchPartners();
   }, []);
 
-  const staticPartners = [...Array(34)].map((_, i) => {
-    const num = (i + 1).toString().padStart(3, '0');
-    return {
-      partnerId: -i,
-      name: `Partner ${i + 1}`,
-      logoMedia: { urlFull: `/images/partners/DM_20250114154507_${num}.png` },
-      description: '',
-      displayOrder: i
-    };
-  });
+  const staticPartners: Partner[] = [];
 
-  const displayPartners = loading ? [] : (partners.length > 0 ? partners : staticPartners);
+  const displayPartners = partners.length > 0 ? partners : staticPartners;
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-white pb-24 pt-0 overflow-x-hidden">
@@ -88,9 +82,24 @@ export default function PartnerPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
           {displayPartners.map((p, idx) => {
             const logoUrl = p.logoMedia?.urlMini || p.logoMedia?.urlThumb || p.logoMedia?.urlFull || '';
-            const formattedLogoUrl = logoUrl.startsWith('/') && !logoUrl.startsWith('/images/') 
-              ? `${process.env.NEXT_PUBLIC_API_URL}${logoUrl}` 
-              : logoUrl;
+
+            // Prefer same-origin proxy when possible to avoid CORS (rewrites in next.config)
+            // If backend path is /uploads or /images we keep it relative so browser requests /uploads/... which Next will rewrite.
+            let formattedLogoUrl = '';
+            if (!logoUrl) {
+              formattedLogoUrl = '';
+            } else if (logoUrl.startsWith('http')) {
+              formattedLogoUrl = logoUrl;
+            } else if (logoUrl.startsWith('/uploads') || logoUrl.startsWith('/images')) {
+              formattedLogoUrl = logoUrl; // use proxy rewrite
+            } else if (logoUrl.startsWith('/')) {
+              // If running against local API, keep relative path to avoid cross-origin request
+              const isLocal = (process.env.NEXT_PUBLIC_API_URL || '').includes('localhost');
+              formattedLogoUrl = isLocal ? logoUrl : `${process.env.NEXT_PUBLIC_API_URL || ''}${logoUrl}`;
+            } else {
+              // Fallback
+              formattedLogoUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/${logoUrl}`;
+            }
 
             return (
               <div 
@@ -101,11 +110,16 @@ export default function PartnerPage() {
               >
                 <div className="relative w-full h-full">
                   {formattedLogoUrl && (
-                    <Image 
+                    <CachedImage 
                       src={formattedLogoUrl} 
                       alt={p.name}
-                      fill
-                      className="object-contain group-hover:scale-110 transition-all duration-500"
+                      className="w-full h-full object-contain group-hover:scale-110 transition-all duration-500"
+                      skeletonClassName="absolute inset-0 animate-pulse bg-white/5"
+                      fallback={
+                        <div className="absolute inset-0 flex items-center justify-center bg-transparent text-gray-500">
+                          <span className="material-icons text-2xl">image</span>
+                        </div>
+                      }
                     />
                   )}
                 </div>

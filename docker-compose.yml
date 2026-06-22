@@ -3,8 +3,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: u44tech-db
-    restart: always
-    profiles: ["db", "full"] # รันเมื่อใช้ profile db หรือ full
+    restart: always 
+    profiles: ["infra", "backend", "full"]
     environment:
       POSTGRES_USER: u44admin
       POSTGRES_PASSWORD: u44password
@@ -14,56 +14,47 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # 2. Search Engine: Meilisearch
-  meilisearch:
-    image: getmeili/meilisearch:latest
-    container_name: u44tech-search
-    restart: always
-    profiles: ["db", "full"]
-    environment:
-      - MEILI_MASTER_KEY=u44masterkey
-      - MEILI_ENV=development
-    ports:
-      - "7700:7700"
-    volumes:
-      - meilisearch_data:/meili_data
-
-  # 3. Backend: NestJS
+  # 2. Backend: NestJS
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: u44tech-backend
     restart: always
-    profiles: ["app", "full"] # รันเมื่อใช้ profile app หรือ full
+    profiles: ["backend", "full"]
     ports:
       - "4000:4000"
     environment:
       - DATABASE_URL=postgresql://u44admin:u44password@postgres:5432/u44tech_v2
-      - MEILI_HOST=http://meilisearch:7700
-      - MEILI_KEY=u44masterkey
       - JWT_SECRET=u44supersecret
     depends_on:
       - postgres
-      - meilisearch
 
-  # 4. Frontend: Next.js
+  # 3. Frontend: Next.js
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: u44tech-frontend
     restart: always
-    profiles: ["app", "full"]
+    profiles: [ "full"]
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:4000
-      - NEXT_PUBLIC_MEILI_HOST=http://localhost:7700
-      - NEXT_PUBLIC_MEILI_KEY=u44masterkey
     depends_on:
       - backend
 
+  # 4. Static File Server: Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: u44tech-nginx
+    restart: always
+    profiles: ["full", "infra", "backend"]
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+
 volumes:
   postgres_data:
-  meilisearch_data:

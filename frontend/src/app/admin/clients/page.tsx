@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import MediaGallery from "@/components/common/MediaGallery";
+import { CachedImage } from "@/components/common/CachedImage";
 
 interface ClientGroup {
   groupId: number;
@@ -201,10 +202,12 @@ export default function ClientsPage() {
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white p-1">
                           {c.logoMedia ? (
-                            <img 
-                              src={(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/') && !(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_API_URL}${c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull}` : (c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull)} 
-                              alt="" 
-                              className="w-full h-full object-contain" 
+                            <CachedImage
+                              src={(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/') && !(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_API_URL}${c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull}` : (c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull)}
+                              alt=""
+                              className="w-full h-full object-contain"
+                              skeletonClassName="w-full h-full animate-pulse bg-gray-100"
+                              fallback={<div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">No Logo</div>}
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">No Logo</div>
