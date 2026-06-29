@@ -22,6 +22,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/cmd_tools", "scratch/migrate_banners.ts", "scratch/migrate_media.ts", "scratch/migrate_partners.ts", "scratch/migrate_post_content.ts", "scratch/migrate_uploads_to_db.ts", "scratch/check_img.ts", "scratch/inspect_clients.ts", "scratch/inspect_post_208.ts", "scratch/inspect_specific_post.ts", "scratch/list_mysql_tables.ts", "scratch/reprocess_legacy_thumbnails.ts", "scratch/reprocess_orphan_media.ts", "scratch/fix_html.ts", "scratch/fix_media.ts", "scratch/fix_slugs.ts", "scratch/fix_slugs_v2.js", "scratch/test_slugs.js"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "drizzle.config.ts"]
 }

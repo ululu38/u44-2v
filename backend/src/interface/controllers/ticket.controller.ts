@@ -1,50 +1,54 @@
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { DrizzleService } from '../../infrastructure/db/drizzle.service.js';
-import { MailService } from '../../infrastructure/mail/mail.service.js';
-import { tickets, users } from '../../domain/entities/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { Controller, Post, Get, Put, Delete, Body, Param, Query, UseGuards, ParseIntPipe, BadRequestException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { CreateTicketDto, GetTicketsQueryDto } from '../dtos/ticket.dto.js';
+import { TicketService } from '../../service/ticket.service.js';
+import { JwtAuthGuard } from '../guard/jwt-auth.guard.js';
+import { RolesGuard } from '../guard/roles.guard.js';
+import { Roles, UserRole } from '../../domain/entities/user.entity.js';
 
 @ApiTags('tickets')
-@Controller('public/tickets')
+@Controller('tickets')
 export class TicketController {
   constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly mailService: MailService,
+    private readonly ticketService: TicketService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 tickets per hour
   @Post()
-  @ApiOperation({ summary: 'Create a new support ticket' })
-  @ApiResponse({ status: 201, description: 'Ticket created successfully' })
-  async createTicket(@Body() body: any) {
-    // 1. Save Ticket
-    const newTicket = await this.drizzle.db.insert(tickets).values(body).returning();
-    
-    if (newTicket.length > 0) {
-      // 2. Find All Admins with isEmailActive = true
-      const activeAdmins = await this.drizzle.db.query.users.findMany({
-        where: and(
-          eq(users.role, 'admin'),
-          eq(users.isEmailActive, true)
-        ),
-      });
+  @ApiOperation({ summary: 'Submit a contact form message (Public)' })
+  @ApiResponse({ status: 201, description: 'Message sent successfully' })
+  async createTicket(@Body() body: CreateTicketDto) {
+    const ticket = await this.ticketService.create(body);
+    if (!ticket) throw new BadRequestException('ไม่สามารถบันทึกข้อความได้');
+    return { message: 'ส่งข้อความเรียบร้อยแล้ว', ticketId: ticket.ticketId };
+  }
 
-      const adminEmails = activeAdmins.map(admin => admin.email);
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EMPLOYEE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all contact messages (Admin only)' })
+  async findAll(@Query() query: GetTicketsQueryDto) {
+    return this.ticketService.findAll(query.page, query.limit, query.filter);
+  }
 
-      // 3. Send Notification Email
-      const mailSent = await this.mailService.notifyAllAdmins(
-        'มี Ticket ใหม่จากหน้าเว็บ',
-        `ลูกค้า: ${body.firstname} สนใจตำแหน่ง: ${body.jobTitle}. เบอร์โทร: ${body.phone}`,
-        adminEmails
-      );
+  @Put(':id/read')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EMPLOYEE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark ticket as read (Admin only)' })
+  async markAsRead(@Param('id', ParseIntPipe) id: number) {
+    return this.ticketService.markAsRead(id);
+  }
 
-      return { 
-        message: 'Ticket received', 
-        id: newTicket[0].ticketId,
-        notification: mailSent ? 'Sent' : 'Failed' // แจ้งสถานะการส่งเมล
-      };
-    }
-
-    throw new BadRequestException('Could not create ticket');
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.EMPLOYEE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a ticket (Admin only)' })
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.ticketService.remove(id);
+    return { message: 'Deleted', ticket: result };
   }
 }

@@ -1,70 +1,57 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiCookieAuth, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard.js';
-import { RolesGuard } from '../../infrastructure/auth/guards/roles.guard.js';
-import { Roles } from '../../infrastructure/auth/decorators/roles.decorator.js';
-import { DrizzleService } from '../../infrastructure/db/drizzle.service.js';
-import { users } from '../../domain/entities/schema.js';
-import { eq, and } from 'drizzle-orm';
-import * as bcrypt from 'bcrypt';
+import { JwtAuthGuard } from '../guard/jwt-auth.guard.js';
+import { RolesGuard } from '../guard/roles.guard.js';
+import { Roles, UserRole } from '../../domain/entities/user.entity.js';
+import { UserService } from '../../service/user.service.js';
+import { CreateUserDto, UpdateUserDto, UpdateMyAccountDto, GetUsersQueryDto } from '../dtos/user.dto.js';
 
 @ApiTags('users')
 @ApiCookieAuth()
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
-  constructor(private readonly drizzle: DrizzleService) {}
+  constructor(
+    private readonly userService: UserService
+  ) {}
 
   // Admin Only: ดูรายชื่อ User ทั้งหมด
   @Get()
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiResponse({ status: 200, description: 'Return all users' })
-  async findAll() {
-    return this.drizzle.db.select().from(users);
+  async findAll(@Query() query: GetUsersQueryDto) {
+    return this.userService.findAll(query.page, query.limit);
   }
 
   // Admin Only: สร้าง User ใหม่
   @Post()
-  @Roles('admin')
-  async create(@Body() body: any) {
-    const hashedPassword = await bcrypt.hash(body.password, 10);
-    return this.drizzle.db.insert(users).values({
-      ...body,
-      password: hashedPassword,
-    }).returning();
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Create a new user (Admin only)' })
+  async create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
   }
 
   // My Account: แก้ไข Email และ Notification ของตัวเอง
   @Put('my-account')
-  async updateProfile(@Req() req: any, @Body() body: any) {
-    const { email, isEmailActive } = body;
-    return this.drizzle.db.update(users)
-      .set({ email, isEmailActive, updatedAt: new Date() })
-      .where(eq(users.uid, req.user.uid))
-      .returning();
+  @ApiOperation({ summary: 'Update your own account settings' })
+  async updateProfile(@Req() req: any, @Body() updateMyAccountDto: UpdateMyAccountDto) {
+    return this.userService.updateProfile(req.user.uid, updateMyAccountDto);
   }
 
   // Admin Only: แก้ไข User (รวมถึงเปลี่ยน Password)
   @Put(':id')
-  @Roles('admin')
-  async update(@Param('id') id: string, @Body() body: any) {
-    const updateData: any = { ...body, updatedAt: new Date() };
-    
-    if (body.password) {
-      updateData.password = await bcrypt.hash(body.password, 10);
-    }
-
-    return this.drizzle.db.update(users)
-      .set(updateData)
-      .where(eq(users.uid, parseInt(id)))
-      .returning();
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Update a user (Admin only)' })
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(id, updateUserDto);
   }
 
   // Admin Only: ลบ User
   @Delete(':id')
-  @Roles('admin')
-  async remove(@Param('id') id: string) {
-    return this.drizzle.db.delete(users).where(eq(users.uid, parseInt(id))).returning();
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a user (Admin only)' })
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.remove(id);
   }
 }

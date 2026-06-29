@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import TextBlock from './editor/TextBlock';
 import ImageBlock from './editor/ImageBlock';
 import MediaGallery from './MediaGallery';
+
 
 interface Block {
   id: string;
@@ -53,7 +55,7 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
     const wrapper = doc.querySelector('.post-content') || doc.body;
     const nodes = Array.from(wrapper.childNodes);
     
-    const parsed: Block[] = nodes.map(node => {
+    const parsed: Block[] = nodes.map((node): Block | null => {
       const el = node as HTMLElement;
       if (el.tagName === 'IMG') {
         const style = el.getAttribute('style') || '';
@@ -78,13 +80,14 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
           id: crypto.randomUUID(),
           type: 'heading',
           content: el.innerHTML,
-          metadata: { level: parseInt(el.tagName.substring(1)) }
+          metadata: { level: parseInt(el.tagName.substring(1)), textAlign: el.style.textAlign || 'left' }
         };
       } else if (el.tagName === 'P' || el.tagName === 'DIV') {
         return {
           id: crypto.randomUUID(),
           type: 'text',
-          content: el.innerHTML || el.textContent || ''
+          content: el.innerHTML || el.textContent || '',
+          metadata: { textAlign: el.style.textAlign || 'left' }
         };
       }
       return null;
@@ -107,9 +110,11 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
         return `<img src="${block.content}" alt="${block.metadata?.alt || ''}" width="${block.metadata?.width || '100%'}" style="${style}" />`;
       } else if (block.type === 'heading') {
         const level = block.metadata?.level || 2;
-        return `<h${level}>${block.content}</h${level}>`;
+        const align = block.metadata?.textAlign || 'left';
+        return `<h${level} style="text-align: ${align};">${block.content}</h${level}>`;
       } else {
-        return `<p>${block.content}</p>`;
+        const align = block.metadata?.textAlign || 'left';
+        return `<p style="text-align: ${align};">${block.content}</p>`;
       }
     }).join('');
 
@@ -160,12 +165,15 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
     const newBlock: Block = {
       id: crypto.randomUUID(),
       type: 'image',
-      content: `${process.env.NEXT_PUBLIC_API_URL}${media.urlFull}`,
+      content: `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${media.urlFull}`,
       metadata: { width: '100%', textAlign: 'center', alt: postTitle || '' }
     };
     setBlocks([...blocks, newBlock]);
     setShowGallery(false);
   };
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <div className="flex flex-col w-full bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -225,7 +233,23 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
                 content={block.content}
                 marginTop={0}
                 marginBottom={0}
-                onUpdate={(updates: any) => updateBlock(block.id, updates as any)}
+                textAlign={block.metadata?.textAlign || 'left'}
+                onUpdate={(updates: any) => {
+                  const mappedUpdates: any = { ...updates };
+                  if (updates.type) {
+                    if (updates.type.startsWith('h')) {
+                      mappedUpdates.type = 'heading';
+                      mappedUpdates.metadata = { ...(mappedUpdates.metadata || block.metadata), level: parseInt(updates.type.substring(1)) };
+                    } else {
+                      mappedUpdates.type = 'text';
+                    }
+                  }
+                  if (updates.textAlign) {
+                    mappedUpdates.metadata = { ...(mappedUpdates.metadata || block.metadata), textAlign: updates.textAlign };
+                    delete mappedUpdates.textAlign;
+                  }
+                  updateBlock(block.id, mappedUpdates);
+                }}
                 onRemove={() => deleteBlock(block.id)}
               />
             )}
@@ -233,8 +257,13 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
         ))}
       </div>
 
-      {showGallery && (
-        <MediaGallery isModal={true} onSelect={handleImageSelect} onClose={() => setShowGallery(false)} />
+      {showGallery && mounted && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl">
+            <MediaGallery isModal={true} onSelect={handleImageSelect} onClose={() => setShowGallery(false)} />
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* HTML Source Modal */}

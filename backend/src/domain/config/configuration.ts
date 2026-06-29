@@ -1,25 +1,25 @@
 export default () => ({
   port: parseInt(process.env.PORT ?? '4000', 10),
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://u44admin:u44password@localhost:5432/u44tech_v2',
+    url: process.env.DATABASE_URL ?? (() => { throw new Error('DATABASE_URL is not set'); })(),
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'u44supersecret',
+    secret: process.env.JWT_SECRET ?? (() => { throw new Error('JWT_SECRET is not set'); })(),
     expiresIn: '1d',
   },
-  mail: {
-    host: process.env.MAIL_HOST || 'smtp.gmail.com',
-    port: 587,
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
+  bcrypt: {
+    saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS ?? '10', 10),
   },
-  initialAdmin: {
-    username: process.env.INITIAL_ADMIN_USERNAME || 'admin',
-    password: process.env.INITIAL_ADMIN_PASSWORD || 'password123',
-    email: process.env.INITIAL_ADMIN_EMAIL || 'admin@u44tech.com',
+  cors: {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   },
-  meili: {
-    host: process.env.MEILI_HOST || 'http://localhost:7700',
-    key: process.env.MEILI_KEY || 'u44masterkey',
+  cookie: {
+    secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
+    sameSite: (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'strict' | 'none',
+    domain: process.env.COOKIE_DOMAIN || undefined,
+  },
+  throttler: {
+    ttl: parseInt(process.env.THROTTLE_TTL ?? '60000', 10),
+    limit: parseInt(process.env.THROTTLE_LIMIT ?? '100', 10),
   },
 });

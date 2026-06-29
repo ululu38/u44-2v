@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import FloatingToolbar from './editor/FloatingToolbar';
 import MediaGallery from './MediaGallery';
 import ImageResizer from './editor/ImageResizer';
-import ReactDOM from 'react-dom';
+
 
 /* ─── Margin Overlay Component ───────────────────────────────── */
 interface MarginHandlesProps {
@@ -172,14 +173,14 @@ const MarginHandles: React.FC<MarginHandlesProps & { canvasRef: React.RefObject<
   );
 };
 
-/* ─── Heading Flattener Utility ──────────────────────────────── */
-const cleanNestedHeadings = (root: HTMLElement) => {
-  const headings = root.querySelectorAll('h1, h2, h3');
+/* ─── DOM Flattener Utility ──────────────────────────────── */
+const cleanInvalidNesting = (root: HTMLElement) => {
+  const elements = root.querySelectorAll('h1, h2, h3, p');
   
-  headings.forEach((heading) => {
-    const blockChildren = heading.querySelectorAll('p, blockquote, ul, ol, hr, h1, h2, h3');
+  elements.forEach((el) => {
+    const blockChildren = el.querySelectorAll('p, blockquote, ul, ol, hr, h1, h2, h3, figure, div');
     if (blockChildren.length > 0) {
-      const parent = heading.parentNode;
+      const parent = el.parentNode;
       if (parent) {
         const frag = document.createDocumentFragment();
         let inlineGroup: Node[] = [];
@@ -196,8 +197,8 @@ const cleanNestedHeadings = (root: HTMLElement) => {
           }
         };
 
-        heading.childNodes.forEach((child) => {
-          const isBlock = ['P', 'BLOCKQUOTE', 'UL', 'OL', 'HR', 'H1', 'H2', 'H3'].includes((child as HTMLElement).tagName);
+        el.childNodes.forEach((child) => {
+          const isBlock = ['P', 'BLOCKQUOTE', 'UL', 'OL', 'HR', 'H1', 'H2', 'H3', 'FIGURE', 'DIV'].includes((child as HTMLElement).tagName);
           if (isBlock) {
             commitInlineGroup();
             frag.appendChild(child.cloneNode(true));
@@ -207,7 +208,7 @@ const cleanNestedHeadings = (root: HTMLElement) => {
         });
         commitInlineGroup();
 
-        parent.replaceChild(frag, heading);
+        parent.replaceChild(frag, el);
       }
     }
   });
@@ -227,9 +228,36 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
   const [showHtml, setShowHtml] = useState(false);
   const [htmlSrc, setHtmlSrc] = useState('');
   const [isInitial, setIsInitial] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
   
   const [activeLink, setActiveLink] = useState<HTMLAnchorElement | null>(null);
   const [linkBubblePos, setLinkBubblePos] = useState<{ top: number, left: number } | null>(null);
+
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+  const [bubbleLeft, setBubbleLeft] = useState(0);
+
+  const lastLinkBubblePos = useRef(linkBubblePos);
+  if (linkBubblePos !== lastLinkBubblePos.current) {
+    lastLinkBubblePos.current = linkBubblePos;
+    if (linkBubblePos) {
+      setBubbleLeft(linkBubblePos.left);
+    }
+  }
+
+  useIsomorphicLayoutEffect(() => {
+    if (activeLink && linkBubblePos && editorRef.current) {
+      const bubbleEl = document.querySelector('.link-bubble-panel') as HTMLElement;
+      if (bubbleEl) {
+        const bubbleWidth = bubbleEl.getBoundingClientRect().width;
+        const canvasWidth = editorRef.current.getBoundingClientRect().width;
+        const maxLeft = Math.max(0, canvasWidth - bubbleWidth - 16);
+        const clampedLeft = Math.max(0, Math.min(maxLeft, linkBubblePos.left));
+        setBubbleLeft(clampedLeft);
+      }
+    }
+  }, [activeLink, linkBubblePos]);
 
   const [selection, setSelection] = useState({
     visible: true,
@@ -237,8 +265,12 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
     italic: false,
     underline: false,
     blockType: 'p',
-    align: 'left'
+    align: 'left',
+    isUl: false,
+    isOl: false
   });
+
+  const [imageAlign, setImageAlign] = useState<'left' | 'center' | 'right' | null>(null);
 
   const ensureTrailingParagraph = useCallback(() => {
     if (!editorRef.current) return false;
@@ -256,10 +288,17 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
     if (isInitial && editorRef.current) {
       document.execCommand('defaultParagraphSeparator', false, 'p');
       (document as any).execCommand('styleWithCSS', false, true);
-      editorRef.current.innerHTML = content || '<p><br></p>';
+      // Fix relative image URLs so they load from the correct image server instead of localhost:3000
+      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || '';
+      const fixedContent = (content || '<p><br></p>').replace(
+        /src="(\/uploads\/[^"]+)"/gi,
+        `src="${baseUrl}$1"`
+      );
       
-      // Sanitise and flatten initial HTML nested headings
-      cleanNestedHeadings(editorRef.current);
+      editorRef.current.innerHTML = fixedContent;
+      
+      // Sanitise and flatten invalid nesting (e.g. lists inside paragraphs)
+      cleanInvalidNesting(editorRef.current);
       
       ensureTrailingParagraph();
       setIsInitial(false);
@@ -268,13 +307,21 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
 
   const emitChange = useCallback(() => {
     if (editorRef.current) {
-      // Flatten any newly nested headings in real-time as they edit
-      cleanNestedHeadings(editorRef.current);
+      // Flatten any newly invalid nesting in real-time as they edit
+      cleanInvalidNesting(editorRef.current);
       
       ensureTrailingParagraph();
       let html = editorRef.current.innerHTML;
       // Remove all <font> tags but keep their content
       html = html.replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '');
+      
+      // Strip base URL from images before saving to database (store as relative /uploads/...)
+      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || '';
+      if (baseUrl) {
+        const baseUrlRegex = new RegExp(`src="${baseUrl.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}(/uploads/[^"]+)"`, 'gi');
+        html = html.replace(baseUrlRegex, 'src="$1"');
+      }
+
       onChange(html);
     }
   }, [onChange, ensureTrailingParagraph]);
@@ -286,21 +333,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
 
       const sel = window.getSelection();
       
-      const isLeft = document.queryCommandState('justifyLeft');
-      const isCenter = document.queryCommandState('justifyCenter');
-      const isRight = document.queryCommandState('justifyRight');
-      const currentAlign = isRight ? 'right' : isCenter ? 'center' : 'left';
-
-      setSelection({
-        visible: true,
-        bold: document.queryCommandState('bold'),
-        italic: document.queryCommandState('italic'),
-        underline: document.queryCommandState('underline'),
-        blockType: document.queryCommandValue('formatBlock') || 'p',
-        align: currentAlign
-      });
-
       if (!sel || !editorRef.current?.contains(sel.anchorNode)) {
+        setSelection(prev => ({ ...prev, visible: false }));
         setActiveElement(null);
         setActiveLink(null);
         setLinkBubblePos(null);
@@ -318,6 +352,22 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
       
       if (node.nodeType === Node.TEXT_NODE) node = node.parentElement!;
       const el = node as HTMLElement;
+
+      const isLeft = document.queryCommandState('justifyLeft');
+      const isCenter = document.queryCommandState('justifyCenter');
+      const isRight = document.queryCommandState('justifyRight');
+      const currentAlign = isRight ? 'right' : isCenter ? 'center' : 'left';
+
+      setSelection({
+        visible: true,
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+        blockType: document.queryCommandValue('formatBlock') || 'p',
+        align: currentAlign,
+        isUl: !!el.closest('ul'),
+        isOl: !!el.closest('ol')
+      });
       
       // Find if we are selecting something inside a link
       const anchor = el.closest('a') as HTMLAnchorElement;
@@ -338,12 +388,17 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
       const figure = el.closest('figure') as HTMLElement;
       if (figure && editorRef.current.contains(figure)) {
         setActiveElement(figure);
+        const ml = figure.style.marginLeft;
+        const mr = figure.style.marginRight;
+        const detectedAlign = (ml === '0px' && mr === 'auto') ? 'left' : (ml === 'auto' && mr === '0px') ? 'right' : 'center';
+        setImageAlign(detectedAlign);
         return;
       }
       
       // Find the nearest block-level container (like p, h1, etc.)
       // This will find paragraphs even if they are inside list items (li)
-      const target = el.closest('p, h1, h2, h3, blockquote') as HTMLElement;
+      setImageAlign(null);
+      const target = el.closest('p, h1, h2, h3, blockquote, li, ul, ol') as HTMLElement;
       if (target && editorRef.current.contains(target)) {
         setActiveElement(target);
       } else {
@@ -446,7 +501,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
   const addImage = (media: any) => {
     const imgHtml = `
       <figure style="margin: 2rem auto; text-align: center; width: 80%;">
-        <img src="${process.env.NEXT_PUBLIC_API_URL}${media.urlFull}" style="border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: block; margin: 0 auto; max-width: 100%;" />
+        <img src="${process.env.NEXT_PUBLIC_IMAGE_URL}${media.urlFull}" style="border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); display: block; margin: 0 auto; max-width: 100%; width: 100%; height: auto;" />
       </figure>
       <p><br></p>
     `;
@@ -575,31 +630,104 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
     }
 
     // For other normal block elements, if we clicked directly on them, set them active
-    const block = target.closest('p, h1, h2, h3, blockquote') as HTMLElement;
+    const block = target.closest('p, h1, h2, h3, blockquote, li, ul, ol') as HTMLElement;
     if (block && editorRef.current?.contains(block)) {
       setActiveElement(block);
     }
   };
 
+  const handleFormat = useCallback((cmd: string, val: string = '') => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    if (cmd === 'createLink') {
+      const range = sel.getRangeAt(0);
+      const cloned = range.cloneContents();
+      
+      const url = prompt('ป้อนลิงก์ (URL):', 'https://');
+      if (!url || !url.trim()) return;
+      
+      const href = /^(https?:\/\/)/i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
+      
+      let linkHtml = '';
+      const hasElements = cloned.querySelector('img, figure, span, div, a') !== null || 
+        (cloned.childNodes.length > 0 && Array.from(cloned.childNodes).some(n => n.nodeType === Node.ELEMENT_NODE));
+      
+      if (hasElements) {
+        const temp = document.createElement('div');
+        temp.appendChild(cloned);
+        const innerHtml = temp.innerHTML;
+        linkHtml = `<a href="${href}" target="_blank" class="text-blue-400 hover:text-blue-300 underline transition-colors cursor-pointer pointer-events-auto" rel="noopener noreferrer">${innerHtml}</a>`;
+      } else {
+        const selectedText = range.toString().trim();
+        const displayText = selectedText || href;
+        linkHtml = `<a href="${href}" target="_blank" class="text-blue-400 hover:text-blue-300 underline transition-colors cursor-pointer pointer-events-auto" rel="noopener noreferrer">${displayText}</a>`;
+      }
+      
+      document.execCommand('insertHTML', false, linkHtml);
+    } else if (cmd === 'formatBlock') {
+      let node = sel.anchorNode as Node;
+      if (node.nodeType === Node.TEXT_NODE) node = node.parentElement!;
+      const el = node as HTMLElement;
+      const li = el.closest('li');
+      
+      if (li) {
+        // Prevent default execCommand which splits the list. Instead, wrap the li contents.
+        const tagName = val.replace(/[<>]/g, '').toLowerCase();
+        const existingBlock = li.querySelector('p, h1, h2, h3');
+        
+        if (existingBlock) {
+          const newBlock = document.createElement(tagName);
+          while (existingBlock.firstChild) newBlock.appendChild(existingBlock.firstChild);
+          existingBlock.replaceWith(newBlock);
+        } else {
+          const newBlock = document.createElement(tagName);
+          while (li.firstChild) newBlock.appendChild(li.firstChild);
+          li.appendChild(newBlock);
+        }
+      } else {
+        document.execCommand(cmd, false, val);
+      }
+    } else {
+      document.execCommand(cmd, false, val);
+    }
+    
+    // Call emitChange to update parent and selection
+    emitChange();
+    
+    // Force a selection read to update the toolbar
+    document.dispatchEvent(new Event('selectionchange'));
+  }, [emitChange]);
+
   return (
     <div className="post-editor-root flex flex-col w-full border border-gray-200 rounded-2xl overflow-visible shadow-lg bg-white">
       
       {/* Top Toolbar */}
-      <div className="post-editor-toolbar flex items-center flex-wrap gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-[70] rounded-t-2xl shadow-sm">
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowGallery(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95">
-            <span className="material-symbols-outlined text-sm">image</span>
-            Add Image
+      <div className="post-editor-toolbar flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-[70] rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2 shrink-0">
+          <button title="Add Image" type="button" onClick={() => setShowGallery(true)} className="flex items-center justify-center gap-1.5 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95">
+            <span className="material-icons text-sm">add_photo_alternate</span>
+            <span className="hidden sm:inline">Add Image</span>
           </button>
         </div>
 
         <div className="w-[1px] h-6 bg-gray-300 mx-2" />
 
-        <div className="flex-grow flex justify-center">
+        <div className="flex-grow flex min-w-0 overflow-x-auto scrollbar-hide items-center">
           <FloatingToolbar 
-            selection={selection} 
-            onClose={() => {}}
-            onFormatBlock={() => {}} 
+            selection={selection}
+            imageAlign={imageAlign ?? undefined}
+            onImageAlign={imageAlign !== null ? (a) => {
+              if (activeElement?.tagName === 'FIGURE') {
+                const fig = activeElement as HTMLElement;
+                if (a === 'left') { fig.style.marginLeft = '0px'; fig.style.marginRight = 'auto'; fig.style.textAlign = 'left'; }
+                else if (a === 'right') { fig.style.marginLeft = 'auto'; fig.style.marginRight = '0px'; fig.style.textAlign = 'right'; }
+                else { fig.style.marginLeft = 'auto'; fig.style.marginRight = 'auto'; fig.style.textAlign = 'center'; }
+                setImageAlign(a);
+                emitChange();
+              }
+            } : undefined}
+            onFormat={handleFormat}
           />
         </div>
 
@@ -611,7 +739,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
       </div>
 
       {/* Editor Canvas (Single Continuous Document) */}
-      <div className="bg-[#0f172a] p-8 min-h-[800px] rounded-b-2xl overflow-hidden flex flex-col items-center">
+      <div className="bg-[#0f172a] p-4 pb-80 sm:p-8 min-h-[800px] overflow-hidden flex flex-col items-center">
         <div className="relative w-full max-w-4xl">
           <div 
             ref={editorRef}
@@ -635,9 +763,12 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
               key={activeElement.querySelector('img')?.getAttribute('src') || 'image-resizer'}
               figure={activeElement} 
               canvasRef={editorRef} 
-              onUpdate={emitChange} 
+              onUpdate={emitChange}
+              align={imageAlign}
+              onAlignChange={setImageAlign}
             />
           )}
+
 
           {/* Link Edit/Delete Bubble Popup */}
           {activeLink && linkBubblePos && (
@@ -645,7 +776,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
               className="absolute z-[80] link-bubble-panel pointer-events-auto"
               style={{ 
                 top: linkBubblePos.top,
-                left: linkBubblePos.left,
+                left: bubbleLeft,
                 transform: 'translateX(0)' 
               }}
               onMouseDown={(e) => e.preventDefault()}
@@ -688,12 +819,17 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
         </div>
       </div>
 
-      {showGallery && (
-        <MediaGallery isModal onSelect={addImage} onClose={() => setShowGallery(false)} />
+      {showGallery && mounted && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl">
+            <MediaGallery isModal onSelect={addImage} onClose={() => setShowGallery(false)} />
+          </div>
+        </div>,
+        document.body
       )}
 
-      {showHtml && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-6">
+      {showHtml && mounted && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm p-6">
           <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {/* Editor Top Bar */}
             <div className="flex items-center justify-between px-6 py-4 bg-[#1e293b]/50 border-b border-slate-800/80">
@@ -764,7 +900,8 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

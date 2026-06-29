@@ -1,0 +1,5 @@
+Fetching: http://localhost:4000/media/uploads/hcu-logo-d694cea2-6395-40ca-ad81-3ee6d8be07e6-mini.webp
+STATUS: 200
+Fetching: http://localhost:4000/media/uploads/hcu-logo-d694cea2-6395-40ca-ad81-3ee6d8be07e6-mini.webp,http://localhost:4000/media/uploads/292-20260215-141509-4557-4caf8d3f-16d5-47a2-8d0e-24940fe19e48-mini.webp
+ERROR: 
+Done.

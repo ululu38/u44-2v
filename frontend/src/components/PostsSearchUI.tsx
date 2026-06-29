@@ -6,8 +6,9 @@ import Link from "next/link";
 import { clientCachedFetch, clearCache } from "@/lib/api/client-cache";
 import { CachedImage } from "@/components/common/CachedImage";
 
+
 // ─── Constants ────────────────────────────────────────────────────────────────
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API = process.env.NEXT_PUBLIC_API_URL;
 const ITEMS_PER_PAGE = 9;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

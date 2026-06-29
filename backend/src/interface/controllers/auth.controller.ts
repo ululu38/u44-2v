@@ -1,48 +1,42 @@
-import { Controller, Post, Body, Res, UnauthorizedException, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
-import type { Response, Request } from 'express';
-import { DrizzleService } from '../../infrastructure/db/drizzle.service.js';
-import { users } from '../../domain/entities/schema.js';
-import { eq } from 'drizzle-orm';
-import * as bcrypt from 'bcrypt';
-import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard.js';
+import type { Response } from 'express';
+import { JwtAuthGuard } from '../guard/jwt-auth.guard.js';
 import { LoginDto } from '../dtos/auth.dto.js';
+import { AuthService } from '../../service/auth.service.js';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly drizzle: DrizzleService,
-    private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @ApiOperation({ summary: 'Login to the system' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() body: LoginDto, @Res({ passthrough: true }) response: Response) {
-    const { username, password } = body;
-    const user = await this.drizzle.db.query.users.findFirst({
-      where: eq(users.username, username),
-    });
+    const result = await this.authService.validateAndLogin(body);
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    const secure = this.configService.get<boolean>('cookie.secure');
+    const sameSite = this.configService.get<'lax' | 'strict' | 'none'>('cookie.sameSite');
+    const domain = this.configService.get<string>('cookie.domain');
 
-    const payload = { username: user.username, sub: user.uid, role: user.role };
-    const token = this.jwtService.sign(payload);
-
-    response.cookie('access_token', token, {
+    response.cookie('access_token', result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
+      domain,
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     });
 
-    return { message: 'Login successful', user: { username: user.username, role: user.role } };
+    return { message: 'Login successful', user: result.user };
   }
 
   @Post('logout')

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
 
 export interface MediaItem {
   id: number;
@@ -21,94 +21,120 @@ interface MediaGalleryProps {
   allowMultiple?: boolean;
 }
 
-const MediaGallery: React.FC<MediaGalleryProps> = ({ 
-  onSelect, 
+const LIMIT = 30;
+
+const MediaGallery: React.FC<MediaGalleryProps> = ({
+  onSelect,
   onSelectMultiple,
-  onClose, 
+  onClose,
   isModal = false,
-  allowMultiple = false 
+  allowMultiple = false
 }) => {
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [totalItems, setTotalItems] = useState(0);
 
-  const fetchMedia = async (p: number) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/media?page=${p}&limit=24`, {
-        credentials: 'include',
-      });
-
-      const result = await res.json();
-      setMediaList(result.data);
-      setTotalPages(result.meta.totalPages);
-      setTotalItems(result.meta.total);
-    } catch (error) {
-      console.error('Failed to fetch media:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMedia(page);
-  }, [page]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const loadingRef = useRef(false);
 
   // Body scroll lock
   useEffect(() => {
     if (isModal) {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
     }
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [isModal]);
 
+  const fetchMedia = useCallback(async (p: number, reset = false) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/media?page=${p}&limit=${LIMIT}`,
+        { credentials: 'include' }
+      );
+      const result = await res.json();
+      const newItems: MediaItem[] = result.data || [];
+
+      setMediaList(prev => reset ? newItems : [...prev, ...newItems]);
+      setTotalItems(result.meta?.total ?? 0);
+      setHasMore(p < (result.meta?.totalPages ?? 1));
+    } catch (err) {
+      console.error('Failed to fetch media:', err);
+    } finally {
+      setLoading(false);
+      loadingRef.current = false;
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchMedia(1, true);
+  }, [fetchMedia]);
+
+  // IntersectionObserver for infinite scroll using callback ref
+  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
+          setPage(prev => {
+            const next = prev + 1;
+            fetchMedia(next);
+            return next;
+          });
+        }
+      },
+      {
+        root: scrollContainerRef.current,
+        rootMargin: '200px',
+        threshold: 0,
+      }
+    );
+
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore, fetchMedia]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     setUploading(true);
     const results: MediaItem[] = [];
-
     try {
-      // Upload files sequentially or in parallel - let's do sequential to avoid server overload but faster feedback
       for (let i = 0; i < files.length; i++) {
         const formData = new FormData();
         formData.append('file', files[i]);
-        
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/media/upload`, {
           method: 'POST',
           body: formData,
           credentials: 'include',
         });
-
-        if (res.ok) {
-          const newMedia = await res.json();
-          results.push(newMedia);
-        }
+        if (res.ok) results.push(await res.json());
       }
-      
-      // Update list with all successful uploads
       if (results.length > 0) {
-        setMediaList([...results, ...mediaList]);
+        // Prepend new uploads and reset
+        setPage(1);
+        setHasMore(true);
+        setMediaList([]);
+        fetchMedia(1, true);
         if (allowMultiple) {
           setSelectedMedia(prev => [...results, ...prev]);
         }
       }
-
-    } catch (error) {
-      console.error('Upload failed:', error);
+    } catch (err) {
+      console.error('Upload failed:', err);
     } finally {
       setUploading(false);
-      // Reset input
       e.target.value = '';
     }
   };
@@ -116,11 +142,10 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const toggleSelect = (item: MediaItem) => {
     if (allowMultiple) {
       const isSelected = selectedMedia.find(m => m.id === item.id);
-      if (isSelected) {
-        setSelectedMedia(selectedMedia.filter(m => m.id !== item.id));
-      } else {
-        setSelectedMedia([...selectedMedia, item]);
-      }
+      setSelectedMedia(isSelected
+        ? selectedMedia.filter(m => m.id !== item.id)
+        : [...selectedMedia, item]
+      );
     } else {
       if (onSelect) onSelect(item);
     }
@@ -141,10 +166,12 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
         method: 'DELETE',
         credentials: 'include',
       });
-
-      if (res.ok) fetchMedia(page);
-    } catch (error) {
-      console.error('Delete failed:', error);
+      if (res.ok) {
+        setMediaList(prev => prev.filter(m => m.id !== id));
+        setTotalItems(prev => prev - 1);
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
     }
   };
 
@@ -156,154 +183,156 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
   const content = (
     <div className={`flex flex-col h-full ${isModal ? 'text-foreground' : 'bg-background !text-foreground p-6 rounded-xl shadow-sm border border-border'}`}>
 
-      <div className="flex justify-between items-center mb-6">
+      {/* ── Header ── */}
+      <div className="flex justify-between items-center mb-5 flex-shrink-0">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">คลังสื่อ (Media Gallery)</h2>
-          <p className="text-sm text-gray-500">จัดการและเลือกรูปภาพสำหรับบทความ</p>
+          <p className="text-sm text-gray-500 mt-0.5">{totalItems} รูปภาพทั้งหมด</p>
         </div>
-        <div className="flex gap-3">
-          <label className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg cursor-pointer flex items-center gap-2 transition-all font-bold shadow-md">
-
-            <span className="material-symbols-outlined text-sm">{uploading ? 'sync' : 'upload'}</span>
+        <div className="flex gap-3 items-center">
+          <label className={`bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl cursor-pointer flex items-center gap-2 transition-all font-bold shadow-md text-sm active:scale-95 ${uploading ? 'opacity-70 pointer-events-none' : ''}`}>
+            <span className={`material-symbols-outlined text-sm ${uploading ? 'animate-spin' : ''}`}>
+              {uploading ? 'sync' : 'upload'}
+            </span>
             {uploading ? 'กำลังอัพโหลด...' : 'อัพโหลดรูปภาพ'}
             <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} accept="image/*" multiple />
           </label>
           {isModal && onClose && (
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all"
+            >
               <span className="material-symbols-outlined">close</span>
             </button>
           )}
         </div>
       </div>
 
-      <div className={`flex-grow overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 pr-2 min-h-[400px] mb-6`}>
-        {loading ? (
-          <div className="col-span-full py-32 text-center text-gray-400 flex flex-col items-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
-            กำลังโหลดคลังรูปภาพ...
-          </div>
-        ) : mediaList.length === 0 ? (
-          <div className="col-span-full py-32 text-center text-gray-400">
-            <span className="material-symbols-outlined text-6xl mb-2 opacity-20">photo_library</span>
-            <p>ยังไม่มีรูปภาพในคลัง</p>
+      {/* ── Scrollable Image Grid ── */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto min-h-0 pr-1"
+        style={{ scrollbarWidth: 'thin' }}
+      >
+        {mediaList.length === 0 && !loading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-gray-400">
+            <span className="material-symbols-outlined text-6xl mb-3 opacity-20">photo_library</span>
+            <p className="text-sm">ยังไม่มีรูปภาพในคลัง</p>
           </div>
         ) : (
-          mediaList.map((item) => {
-            const isSelected = selectedMedia.some(m => m.id === item.id);
-            return (
-              <div
-                key={item.id}
-                onClick={() => toggleSelect(item)}
-                className={`group relative aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 transition-all shadow-sm ${isSelected ? 'border-blue-600 ring-2 ring-blue-600/20' : 'border-gray-200 hover:border-blue-400'}`}
-              >
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${item.urlMini || item.urlThumb}`}
-                  alt=""
-                  fill
-                  className={`object-cover transition-transform duration-500 ${isSelected ? 'scale-105' : 'group-hover:scale-110'}`}
-                  placeholder="blur"
-                  blurDataURL={item.blurHash}
-                />
-                
-                {/* Selection Indicator */}
-                {isSelected && (
-                  <div className="absolute top-2 right-2 bg-blue-600 text-white rounded-full p-1 shadow-lg z-10 animate-in zoom-in duration-200">
-                    <span className="material-symbols-outlined text-sm font-bold">check</span>
-                  </div>
-                )}
+          <div
+            className="grid gap-3"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}
+          >
+            {mediaList.map((item) => {
+              const isSelected = selectedMedia.some(m => m.id === item.id);
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => toggleSelect(item)}
+                  className={`group relative aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer shadow-sm
+                    ${isSelected
+                      ? 'border-blue-500 ring-2 ring-blue-500/30 shadow-blue-100'
+                      : 'border-transparent hover:border-blue-300 hover:shadow-md'
+                    }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${item.urlMini || item.urlThumb}`}
+                    alt=""
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500
+                      ${isSelected ? 'scale-105' : 'group-hover:scale-110'}`}
+                    loading="lazy"
+                  />
 
-                {/* ID Tag */}
-                {!isSelected && (
-                  <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/50 rounded text-[9px] text-white/70 font-mono backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                    ID: {item.id}
-                  </div>
-                )}
+                  {/* Selected checkmark */}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg z-10 animate-in zoom-in duration-200">
+                      <span className="material-symbols-outlined text-sm font-bold">check</span>
+                    </div>
+                  )}
 
-                {/* Individual Delete/Copy (Only when NOT in select mode or if not selected) */}
-                {!isModal && !isSelected && (
-                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); copyToClipboard(`${process.env.NEXT_PUBLIC_API_URL}${item.urlFull}`, 'URL Copied!'); }}
-                        className="bg-white/90 p-1.5 rounded-lg text-blue-600 hover:bg-white"
+                  {/* ID tag */}
+                  {!isSelected && (
+                    <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 bg-black/50 rounded text-[9px] text-white/70 font-mono backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                      #{item.id}
+                    </div>
+                  )}
+
+                  {/* Delete / Copy overlay (non-modal) */}
+                  {!isModal && !isSelected && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); copyToClipboard(`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${item.urlFull}`, 'URL Copied!'); }}
+                        className="bg-white/90 p-1.5 rounded-lg text-blue-600 hover:bg-white transition-all"
                       >
                         <span className="material-symbols-outlined text-sm">link</span>
                       </button>
-                      <button 
+                      <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
-                        className="bg-red-500/90 p-1.5 rounded-lg text-white hover:bg-red-600"
+                        className="bg-red-500/90 p-1.5 rounded-lg text-white hover:bg-red-600 transition-all"
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                       </button>
-                   </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t pt-6 border-gray-100">
-        <div className="flex items-center gap-6">
-           {totalPages > 1 && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                หน้า {page} / {totalPages}
-              </span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 text-gray-600"
-                >
-                  <span className="material-symbols-outlined text-sm">chevron_left</span>
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 text-gray-600"
-                >
-                  <span className="material-symbols-outlined text-sm">chevron_right</span>
-                </button>
-              </div>
-            </div>
-          )}
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            {totalItems} รูปภาพทั้งหมด
-          </span>
-        </div>
-
-        {isModal && (
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-foreground/70">
-              เลือกแล้ว {selectedMedia.length} รูป
-            </span>
-            <button
-              onClick={handleConfirm}
-              disabled={selectedMedia.length === 0}
-              className="bg-primary hover:bg-primary/90 disabled:bg-surface-muted disabled:text-foreground/30 text-primary-foreground px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
-            >
-              ตกลง (Confirm)
-            </button>
+            {/* Sentinel */}
+            {hasMore && <div ref={sentinelRef} className="col-span-full h-10 w-full" />}
           </div>
+        )}
 
+        {/* Loading spinner */}
+        {loading && (
+          <div className="flex justify-center py-8">
+            <div className="flex items-center gap-3 text-gray-400 text-sm">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              กำลังโหลด...
+            </div>
+          </div>
+        )}
+
+        {/* End of list */}
+        {!loading && !hasMore && mediaList.length > 0 && (
+          <p className="text-center text-xs text-gray-300 py-6 font-mono">
+            — โหลดครบทุกรูปแล้ว ({totalItems} รูป) —
+          </p>
         )}
       </div>
+
+      {/* ── Footer (multi-select confirm) ── */}
+      {isModal && allowMultiple && (
+        <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100 flex-shrink-0">
+          <span className="text-sm font-semibold text-gray-500">
+            เลือกแล้ว <span className="text-blue-600 font-bold">{selectedMedia.length}</span> รูป
+          </span>
+          <button
+            onClick={handleConfirm}
+            disabled={selectedMedia.length === 0}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white px-8 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95"
+          >
+            ตกลง (Confirm)
+          </button>
+        </div>
+      )}
     </div>
   );
 
   if (isModal) {
     return (
-      <div className="fixed top-0 left-0 w-full h-full z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl p-8 w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col relative">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 w-full max-w-6xl h-[90vh] flex flex-col relative">
           {content}
         </div>
       </div>
     );
   }
 
-
-
   return content;
 };
 
 export default MediaGallery;
+

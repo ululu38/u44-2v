@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+
 interface HashtagsInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
@@ -39,7 +40,7 @@ export default function HashtagsInput({ value, onChange }: HashtagsInputProps) {
 
     debounceTimer.current = setTimeout(async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
         const response = await fetch(`${apiUrl}/hashtags/search?q=${encodeURIComponent(query)}`);
         if (response.ok) {
           const hits = await response.json();

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import React from 'react';
 
+
 interface OptimizedImageProps {
   src: string;
   webpSrc?: string | null;
@@ -25,7 +26,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   objectFit = 'cover',
 }) => {
   // Construct the full URL if it's a relative path from the backend
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
   const fullSrc = src.startsWith('http') ? src : `${baseUrl}${src}`;
   
   return (
@@ -45,6 +46,5 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     </div>
   );
 };
-
 
 export default OptimizedImage;

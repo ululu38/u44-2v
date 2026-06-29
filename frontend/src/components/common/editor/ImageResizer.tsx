@@ -9,12 +9,16 @@ interface ImageResizerProps {
   canvasRef: React.RefObject<HTMLDivElement>;
   /** Called whenever a style change should be persisted */
   onUpdate: () => void;
+  /** Pass the current alignment state down to trigger box refresh */
+  align?: 'left' | 'center' | 'right' | null;
+  /** Called when image alignment changes so toolbar can sync */
+  onAlignChange?: (align: 'left' | 'center' | 'right') => void;
 }
 
 /** Corner handle directions for resize */
 type HandleDir = 'se' | 'sw' | 'ne' | 'nw' | 'e' | 'w';
 
-const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate }) => {
+const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate, align: propAlign, onAlignChange }) => {
   const img = figure.querySelector('img') as HTMLImageElement | null;
 
   /* ---------- overlay position (tracks figure) ---------- */
@@ -33,13 +37,24 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
   }, [figure, canvasRef]);
 
   useEffect(() => {
+    // Ensure existing images scale properly with the figure wrapper
+    if (img) {
+      if (img.style.width !== '100%') img.style.width = '100%';
+      if (img.style.height !== 'auto') img.style.height = 'auto';
+    }
+
     refreshBox();
     const ro = new ResizeObserver(() => requestAnimationFrame(refreshBox));
     ro.observe(figure);
     if (canvasRef.current) ro.observe(canvasRef.current);
     window.addEventListener('resize', refreshBox);
     return () => { ro.disconnect(); window.removeEventListener('resize', refreshBox); };
-  }, [refreshBox, figure, canvasRef]);
+  }, [refreshBox, figure, canvasRef, img]);
+
+  // When alignment changes from outside (e.g. FloatingToolbar), we must refresh the box
+  useEffect(() => {
+    refreshBox();
+  }, [propAlign, refreshBox]);
 
   /* ---------- drag-resize state ---------- */
   const dragging = useRef<{ dir: HandleDir; startX: number; startW: number; parentW: number } | null>(null);
@@ -63,7 +78,13 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
       const dx = e.clientX - startX;
       // east handles grow right, west handles grow left (invert)
       const sign = dir.includes('e') ? 1 : -1;
-      const newW = Math.min(parentW, Math.max(80, startW + sign * dx));
+      
+      // If image is center-aligned, pulling one side should expand total width by 2x the drag distance 
+      // to keep the handle directly under the cursor.
+      const isCenter = figure.style.marginLeft === 'auto' && figure.style.marginRight === 'auto';
+      const multiplier = isCenter ? 2 : 1;
+      
+      const newW = Math.min(parentW, Math.max(80, startW + (sign * dx * multiplier)));
       figure.style.width = `${(newW / parentW) * 100}%`;
       requestAnimationFrame(refreshBox);
       onUpdate();
@@ -157,6 +178,7 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
       figure.style.textAlign = 'center';
     }
     requestAnimationFrame(refreshBox);
+    onAlignChange?.(value);
     onUpdate();
   };
 
@@ -176,54 +198,6 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
         style={{ top: box.top, left: box.left, width: box.width, height: box.height }}
       >
         <div className="absolute inset-0 border-2 border-blue-500/50 rounded-lg ring-4 ring-blue-500/10 pointer-events-none" />
-
-        {/* Margin handles */}
-        <div
-          className="absolute -top-1 left-0 right-0 h-2 bg-blue-500/10 cursor-ns-resize pointer-events-auto hover:bg-blue-500/50 transition-colors"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const startY = e.clientY;
-            const style = window.getComputedStyle(figure);
-            const startM = parseInt(style.marginTop) || 0;
-            const onMove = (ev: MouseEvent) => {
-              const val = Math.max(0, startM + ev.clientY - startY);
-              figure.style.marginTop = `${val}px`;
-              setMargin(val);
-              refreshBox();
-              onUpdate();
-            };
-            const onUp = () => {
-              window.removeEventListener('mousemove', onMove);
-              window.removeEventListener('mouseup', onUp);
-            };
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onUp);
-          }}
-        />
-        <div
-          className="absolute -bottom-1 left-0 right-0 h-2 bg-blue-500/10 cursor-ns-resize pointer-events-auto hover:bg-blue-500/50 transition-colors"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const startY = e.clientY;
-            const style = window.getComputedStyle(figure);
-            const startM = parseInt(style.marginBottom) || 0;
-            const onMove = (ev: MouseEvent) => {
-              const val = Math.max(0, startM - (ev.clientY - startY));
-              figure.style.marginBottom = `${val}px`;
-              setMargin(val);
-              refreshBox();
-              onUpdate();
-            };
-            const onUp = () => {
-              window.removeEventListener('mousemove', onMove);
-              window.removeEventListener('mouseup', onUp);
-            };
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onUp);
-          }}
-        />
 
         {/* Corner + edge resize handles */}
         <div onMouseDown={(e) => startResize(e, 'nw')} className={`${handleCls} -top-1.5 -left-1.5 cursor-nw-resize`} />
@@ -249,7 +223,7 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
       {/* Floating style controls panel */}
       <div
         className="absolute z-30 pointer-events-auto image-resizer-panel"
-        style={{ top: panelTop, left: box.left + box.width / 2 - 270, minWidth: 540 }}
+        style={{ top: panelTop, left: box.left + box.width / 2 - 90, width: 180 }}
         onMouseDown={(e) => {
           // If we clicked an input range slider or button, allow the mouse events to behave properly
           const targetTagName = (e.target as HTMLElement).tagName;
@@ -261,7 +235,7 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
           e.preventDefault();
         }}
       >
-        <div className="flex items-center gap-3 bg-gray-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl px-5 py-3">
+        <div className="flex items-center gap-3 bg-gray-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl px-4 py-2.5">
           {/* Radius */}
           <div className="flex flex-col gap-1 flex-1">
             <div className="flex items-center justify-between">
@@ -273,81 +247,6 @@ const ImageResizer: React.FC<ImageResizerProps> = ({ figure, canvasRef, onUpdate
               onChange={(e) => applyRadius(Number(e.target.value))}
               className="w-full h-1.5 rounded-full cursor-pointer accent-blue-500"
             />
-          </div>
-
-          <div className="w-px h-8 bg-white/10 shrink-0" />
-
-          {/* Shadow */}
-          <div className="flex flex-col gap-1 flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Shadow</span>
-              <span className="text-[10px] font-mono text-blue-400">{shadow}px</span>
-            </div>
-            <input
-              type="range" min={0} max={80} value={shadow}
-              onChange={(e) => applyShadow(Number(e.target.value))}
-              className="w-full h-1.5 rounded-full cursor-pointer accent-blue-500"
-            />
-          </div>
-
-          <div className="w-px h-8 bg-white/10 shrink-0" />
-
-          {/* Margin */}
-          <div className="flex flex-col gap-1 flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Margin</span>
-              <span className="text-[10px] font-mono text-blue-400">{margin}px</span>
-            </div>
-            <input
-              type="range" min={0} max={120} value={margin}
-              onChange={(e) => applyMargin(Number(e.target.value))}
-              className="w-full h-1.5 rounded-full cursor-pointer accent-blue-500"
-            />
-          </div>
-
-          <div className="w-px h-8 bg-white/10 shrink-0" />
-
-          {/* Alignment */}
-          <div className="flex flex-col gap-1 shrink-0">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-1">Align</span>
-            <div className="flex bg-white/5 rounded-xl p-0.5 border border-white/5">
-              <button
-                type="button"
-                onClick={() => applyAlign('left')}
-                className={`p-1.5 rounded-lg transition-all flex items-center justify-center ${
-                  align === 'left'
-                    ? 'bg-blue-600 text-white shadow-md scale-105'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-                title="Align Left"
-              >
-                <span className="material-symbols-outlined text-[16px]">format_align_left</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => applyAlign('center')}
-                className={`p-1.5 rounded-lg transition-all flex items-center justify-center ${
-                  align === 'center'
-                    ? 'bg-blue-600 text-white shadow-md scale-105'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-                title="Align Center"
-              >
-                <span className="material-symbols-outlined text-[16px]">format_align_center</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => applyAlign('right')}
-                className={`p-1.5 rounded-lg transition-all flex items-center justify-center ${
-                  align === 'right'
-                    ? 'bg-blue-600 text-white shadow-md scale-105'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-                title="Align Right"
-              >
-                <span className="material-symbols-outlined text-[16px]">format_align_right</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>

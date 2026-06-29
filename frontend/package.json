@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "test-nuxt",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,29 +10,32 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
-    "@tanstack/react-query": "^5",
-    "@tiptap/extension-image": "^3.23.4",
-    "@tiptap/extension-link": "^3.23.4",
-    "@tiptap/extension-text-align": "^3.23.4",
-    "@tiptap/pm": "^3.23.4",
-    "@tiptap/react": "^3.23.4",
-    "@tiptap/starter-kit": "^3.23.4",
-    "@types/dompurify": "^3.0.5",
-    "dompurify": "^3.4.5",
+    "@tanstack/react-query": "^5.100.14",
+    "@tiptap/core": "^3.27.1",
+    "@tiptap/extension-image": "^3.27.1",
+    "@tiptap/extension-link": "^3.27.1",
+    "@tiptap/extension-text-align": "^3.27.1",
+    "@tiptap/pm": "^3.27.1",
+    "@tiptap/react": "^3.27.1",
+    "@tiptap/starter-kit": "^3.27.1",
+    "dompurify": "^3.4.7",
     "html-react-parser": "^6.1.2",
-    "next": "16.2.4",
+    "lucide-react": "^1.16.0",
+    "next": "15.3.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-intersection-observer": "^10.0.3",
     "sqids": "^0.3.0",
-    "tiptap-extension-resize-image": "^1.4.0"
+    "tiptap-extension-resize-image": "^1.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.4",
+    "eslint-config-next": "15.3.9",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

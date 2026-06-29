@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+
 const menuItems = [
   { id: 'PRODUCT', icon: 'developer_mode', label: 'SOLUTION', link: '/solution' },
   { id: 'PROJECT', icon: 'share', label: 'PROJECT', link: '/project' },
@@ -39,7 +40,7 @@ export default function Navbar() {
       return;
     }
     const timeoutId = setTimeout(() => {
-      const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      const api = process.env.NEXT_PUBLIC_API_URL;
       console.log("[Search Debug] Fetching recommendations from:", `${api}/posts?page=1&limit=5&q=${query}&fields=postId,title,slug,createdAt,thumbnailMedia&thumbSize=mini`);
       fetch(`${api}/posts?page=1&limit=5&q=${encodeURIComponent(query)}&fields=postId,title,slug,createdAt,thumbnailMedia&thumbSize=mini`)
         .then((r) => r.json())
@@ -167,7 +168,7 @@ export default function Navbar() {
                   </div>
                   {recommendations.map((post, idx) => {
                     const thumb = post.thumbnailMedia?.urlThumb || post.thumbnailMedia?.urlFull;
-                    const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${thumb}`) : null;
+                    const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${thumb}`) : null;
                     return (
                       <Link 
                         key={post.postId} 
@@ -266,7 +267,7 @@ export default function Navbar() {
                   <div className="py-1">
                     {recommendations.map((post) => {
                       const thumb = post.thumbnailMedia?.urlThumb || post.thumbnailMedia?.urlFull;
-                      const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}${thumb}`) : null;
+                      const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${thumb}`) : null;
                       return (
                         <Link 
                           key={post.postId} 

@@ -118,46 +118,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({ src, metadata, onUpdate }) => {
             />
           ))}
         </div>
-
-        {/* Floating Design Toolbar */}
-        <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl border border-gray-100 p-1.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-30 pointer-events-auto whitespace-nowrap">
-          {/* Alignment */}
-          <div className="flex bg-gray-50 rounded-lg p-0.5">
-            <button onClick={() => onUpdate({ ...metadata, textAlign: 'left' })} className={`p-1.5 rounded-md transition-colors ${textAlign === 'left' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Align Left">
-              <span className="material-symbols-outlined text-sm">format_align_left</span>
-            </button>
-            <button onClick={() => onUpdate({ ...metadata, textAlign: 'center' })} className={`p-1.5 rounded-md transition-colors ${textAlign === 'center' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Align Center">
-              <span className="material-symbols-outlined text-sm">format_align_center</span>
-            </button>
-            <button onClick={() => onUpdate({ ...metadata, textAlign: 'right' })} className={`p-1.5 rounded-md transition-colors ${textAlign === 'right' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Align Right">
-              <span className="material-symbols-outlined text-sm">format_align_right</span>
-            </button>
-          </div>
-
-          <div className="w-[1px] h-6 bg-gray-200 mx-1" />
-
-          {/* Shadow */}
-          <button 
-            onClick={() => onUpdate({ ...metadata, shadow: shadow === 'soft' ? 'hard' : shadow === 'hard' ? 'none' : 'soft' })}
-            className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-[10px] font-bold ${shadow !== 'none' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
-          >
-            <span className="material-symbols-outlined text-sm">wb_sunny</span>
-            Shadow
-          </button>
-
-          {/* Radius */}
-          <button 
-            onClick={() => onUpdate({ ...metadata, radius: radius === '0px' ? '8px' : radius === '8px' ? '24px' : '0px' })}
-            className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-[10px] font-bold ${radius !== '0px' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
-          >
-            <span className="material-symbols-outlined text-sm">rounded_corner</span>
-            Round
-          </button>
-
-          <div className="w-[1px] h-6 bg-gray-200 mx-1" />
-          
-          <span className="px-2 text-[10px] font-bold text-blue-600 bg-blue-50 py-1 rounded-md">{Math.round(parseFloat(width))}%</span>
-        </div>
       </div>
     </div>
   );

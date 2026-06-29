@@ -8,12 +8,13 @@ interface TextBlockProps {
   content: string;
   marginTop: number;
   marginBottom: number;
-  onUpdate: (updates: Partial<{ content: string; marginTop: number; marginBottom: number; type: 'p' | 'h1' | 'h2' | 'h3' }>) => void;
+  textAlign?: 'left' | 'center' | 'right';
+  onUpdate: (updates: Partial<{ content: string; marginTop: number; marginBottom: number; type: 'p' | 'h1' | 'h2' | 'h3'; textAlign: 'left' | 'center' | 'right' }>) => void;
   onRemove: () => void;
 }
 
 const TextBlock: React.FC<TextBlockProps> = ({ 
-  type, content, marginTop, marginBottom, onUpdate, onRemove 
+  type, content, marginTop, marginBottom, textAlign = 'left', onUpdate, onRemove 
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState<'top' | 'bottom' | null>(null);
@@ -76,7 +77,8 @@ const TextBlock: React.FC<TextBlockProps> = ({
       style={{ 
         marginTop: `${marginTop}px`, 
         marginBottom: `${marginBottom}px`,
-        padding: '8px 12px'
+        padding: '8px 12px',
+        textAlign: textAlign
       }}
       onClick={() => setIsFocused(true)}
       onBlur={(e) => {
@@ -164,6 +166,18 @@ const TextBlock: React.FC<TextBlockProps> = ({
               {t.toUpperCase()}
             </button>
           ))}
+          
+          <div className="w-[1px] h-4 bg-gray-700 mx-1" />
+          
+          <button type="button" onClick={() => onUpdate({ textAlign: 'left' })} className={`p-1 rounded transition-colors flex items-center justify-center ${textAlign === 'left' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-white/10'}`} title="Align Left">
+            <span className="material-symbols-outlined text-[14px]">format_align_left</span>
+          </button>
+          <button type="button" onClick={() => onUpdate({ textAlign: 'center' })} className={`p-1 rounded transition-colors flex items-center justify-center ${textAlign === 'center' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-white/10'}`} title="Align Center">
+            <span className="material-symbols-outlined text-[14px]">format_align_center</span>
+          </button>
+          <button type="button" onClick={() => onUpdate({ textAlign: 'right' })} className={`p-1 rounded transition-colors flex items-center justify-center ${textAlign === 'right' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-white/10'}`} title="Align Right">
+            <span className="material-symbols-outlined text-[14px]">format_align_right</span>
+          </button>
         </div>
       )}
     </div>

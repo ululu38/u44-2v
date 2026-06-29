@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
+
 interface ShareActionsProps {
   postId: number;
   postTitle: string;
@@ -17,7 +18,7 @@ const ShareActions: React.FC<ShareActionsProps> = ({ postId, postTitle, views })
     setUrl(window.location.href);
 
     // Call background view increment endpoint
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     fetch(`${apiUrl}/posts/${postId}/view`, {
       method: 'POST'
     }).catch(() => {});
