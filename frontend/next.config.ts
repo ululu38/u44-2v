@@ -7,20 +7,30 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
 const parseRemotePattern = (urlStr: string) => {
   try {
     const url = new URL(urlStr);
-    return {
-      protocol: url.protocol.replace(':', '') as 'http' | 'https',
-      hostname: url.hostname,
-      port: url.port || undefined,
-      pathname: '/**',
-    };
+    const hostname = url.hostname;
+    const port = url.port || undefined;
+    return [
+      {
+        protocol: 'http' as const,
+        hostname,
+        port,
+        pathname: '/**',
+      },
+      {
+        protocol: 'https' as const,
+        hostname,
+        port,
+        pathname: '/**',
+      }
+    ];
   } catch (e) {
-    return null;
+    return [];
   }
 };
 
-const apiPattern = parseRemotePattern(apiUrl);
-const imagePattern = parseRemotePattern(imageUrl);
-const sitePattern = parseRemotePattern(siteUrl);
+const apiPatterns = parseRemotePattern(apiUrl);
+const imagePatterns = parseRemotePattern(imageUrl);
+const sitePatterns = parseRemotePattern(siteUrl);
 
 const nextConfig: NextConfig = {
   env: {
@@ -40,9 +50,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true, // Preserve component state across navigations (Next.js 16+)
   images: {
     remotePatterns: [
-      ...(imagePattern ? [imagePattern] : []),
-      ...(apiPattern ? [apiPattern] : []),
-      ...(sitePattern ? [sitePattern] : []),
+      ...imagePatterns,
+      ...apiPatterns,
+      ...sitePatterns,
       // Fallbacks for production domains
       {
         protocol: 'https',
@@ -72,4 +82,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
 
