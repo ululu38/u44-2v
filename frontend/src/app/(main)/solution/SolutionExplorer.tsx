@@ -134,7 +134,7 @@ export default function SolutionExplorer({ mode = 'infinite' }: SolutionExplorer
     if (label === activeTab) return;
     setActiveTab(label);
     setPage(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const loadMore = useCallback(() => {
@@ -170,7 +170,7 @@ export default function SolutionExplorer({ mode = 'infinite' }: SolutionExplorer
   const isEmpty = !isLoading && posts.length === 0 && !error;
 
   return (
-    <div ref={containerRef} className="space-y-8">
+    <div ref={containerRef} className="space-y-8 scroll-mt-[90px]">
       {/* Pill-shaped Navigation Bar */}
       <div className="sticky top-[80px] z-40 py-4">
         <div className="bg-neutral-900/90 backdrop-blur-md border border-neutral-800 rounded-full px-4 py-2 flex items-center gap-2 max-w-[960px] mx-auto shadow-2xl">
