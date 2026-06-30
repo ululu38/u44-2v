@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPostForMetadata(slug);
   if (!post || post.status !== 1) return { title: 'Post Not Found' };
 
-  const siteUrl = 'https://u44tech.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
   const imageUrl = (post.thumbnailMedia && getImageUrl(post.thumbnailMedia.urlFull)) || `${siteUrl}/default-share.jpg`;
   
   const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
@@ -128,7 +128,7 @@ async function PostContent({ params }: { params: Promise<{ slug: string }> }) {
   const post = await getPost(slug);
   if (!post || post.status !== 1) notFound();
 
-  const siteUrl = 'https://u44tech.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
   const imageUrl = (post.thumbnailMedia && getImageUrl(post.thumbnailMedia.urlFull)) || '';
   const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
 
