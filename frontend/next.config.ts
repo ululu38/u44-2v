@@ -1,10 +1,32 @@
 import type { NextConfig } from "next";
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
+
+const parseRemotePattern = (urlStr: string) => {
+  try {
+    const url = new URL(urlStr);
+    return {
+      protocol: url.protocol.replace(':', '') as 'http' | 'https',
+      hostname: url.hostname,
+      port: url.port || undefined,
+      pathname: '/**',
+    };
+  } catch (e) {
+    return null;
+  }
+};
+
+const apiPattern = parseRemotePattern(apiUrl);
+const imagePattern = parseRemotePattern(imageUrl);
+const sitePattern = parseRemotePattern(siteUrl);
+
 const nextConfig: NextConfig = {
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
-    NEXT_PUBLIC_IMAGE_URL: process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080',
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th',
+    NEXT_PUBLIC_API_URL: apiUrl,
+    NEXT_PUBLIC_IMAGE_URL: imageUrl,
+    NEXT_PUBLIC_SITE_URL: siteUrl,
     NEXT_PUBLIC_CONTACT_TEL: process.env.NEXT_PUBLIC_CONTACT_TEL || '02-211-1122',
     NEXT_PUBLIC_CONTACT_MOBILE: process.env.NEXT_PUBLIC_CONTACT_MOBILE || '085-666-1111',
     NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'info@u44tech.com',
@@ -18,18 +40,10 @@ const nextConfig: NextConfig = {
   cacheComponents: true, // Preserve component state across navigations (Next.js 16+)
   images: {
     remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8080',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '4000',
-        pathname: '/**',
-      },
+      ...(imagePattern ? [imagePattern] : []),
+      ...(apiPattern ? [apiPattern] : []),
+      ...(sitePattern ? [sitePattern] : []),
+      // Fallbacks for production domains
       {
         protocol: 'https',
         hostname: 'u44.co.th',
@@ -58,3 +72,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
