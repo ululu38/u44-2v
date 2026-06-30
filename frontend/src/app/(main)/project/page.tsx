@@ -281,7 +281,10 @@ export default function ProjectPage() {
                 return (
                   <button
                     key={tab.label || 'all'}
-                    onClick={() => setActiveTab(tab.label)}
+                    onClick={() => {
+                      setActiveTab(tab.label);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     suppressHydrationWarning
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-all border ${
                       isActive 

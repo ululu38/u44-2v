@@ -134,6 +134,7 @@ export default function SolutionExplorer({ mode = 'infinite' }: SolutionExplorer
     if (label === activeTab) return;
     setActiveTab(label);
     setPage(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const loadMore = useCallback(() => {
