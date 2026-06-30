@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const API = process.env.NEXT_PUBLIC_API_URL;
+  const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
   // Use NEXT_PUBLIC_SITE_URL if available, otherwise default to localhost or production domain
-  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
 
   // Static routes
   const staticRoutes = [
