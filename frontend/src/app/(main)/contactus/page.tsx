@@ -104,16 +104,16 @@ export default function ContactUsPage() {
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <div className="flex-grow space-y-5 text-sm md:text-base text-neutral-400">
               <h2 className="text-xl font-black text-neutral-100 mb-6 border-b-2 border-blue-600 w-fit pb-1.5 uppercase tracking-wide">Contact Info</h2>
-              <p><span className="font-bold text-neutral-300 inline-block w-20">Tel:</span><a href="tel:022111122" className="hover:text-blue-400 transition-colors">02-211-1122</a></p>
-              <p><span className="font-bold text-neutral-300 inline-block w-20">Mobile:</span><a href="tel:0856661111" className="hover:text-blue-400 transition-colors">085-666-1111</a></p>
-              <p><span className="font-bold text-neutral-300 inline-block w-20">E-mail:</span><a href="mailto:info@u44tech.com" className="hover:text-blue-400 transition-colors">info@u44tech.com</a></p>
-              <p><span className="font-bold text-neutral-300 inline-block w-20">Website:</span><a href="https://u44tech.com" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">u44tech.com</a></p>
-              <p><span className="font-bold text-neutral-300 inline-block w-20">Facebook:</span><a href="https://www.facebook.com/profile.php?id=61555566792786" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">U44 Technology Solutions</a></p>
-              <p><span className="font-bold text-neutral-300 inline-block w-20">Line OA:</span><a href="https://line.me/R/ti/p/@u44tech" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">@u44tech</a></p>
-              <p className="group cursor-pointer flex items-start" onClick={() => { navigator.clipboard.writeText('8 Udomsuk 44 Bangna-Neua, Bangna, Bangkok 10260'); alert('ที่อยู่ถูกคัดลอกแล้ว!'); }}>
+              <p><span className="font-bold text-neutral-300 inline-block w-20">Tel:</span><a href={`tel:${process.env.NEXT_PUBLIC_CONTACT_TEL?.replace(/-/g, '')}`} className="hover:text-blue-400 transition-colors">{process.env.NEXT_PUBLIC_CONTACT_TEL}</a></p>
+              <p><span className="font-bold text-neutral-300 inline-block w-20">Mobile:</span><a href={`tel:${process.env.NEXT_PUBLIC_CONTACT_MOBILE?.replace(/-/g, '')}`} className="hover:text-blue-400 transition-colors">{process.env.NEXT_PUBLIC_CONTACT_MOBILE}</a></p>
+              <p><span className="font-bold text-neutral-300 inline-block w-20">E-mail:</span><a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`} className="hover:text-blue-400 transition-colors">{process.env.NEXT_PUBLIC_CONTACT_EMAIL}</a></p>
+              <p><span className="font-bold text-neutral-300 inline-block w-20">Website:</span><a href={`https://${process.env.NEXT_PUBLIC_CONTACT_WEBSITE}`} target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">{process.env.NEXT_PUBLIC_CONTACT_WEBSITE}</a></p>
+              <p><span className="font-bold text-neutral-300 inline-block w-20">Facebook:</span><a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK} target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">{process.env.NEXT_PUBLIC_CONTACT_FACEBOOK_LABEL}</a></p>
+              <p><span className="font-bold text-neutral-300 inline-block w-20">Line OA:</span><a href={process.env.NEXT_PUBLIC_CONTACT_LINE} target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">{process.env.NEXT_PUBLIC_CONTACT_LINE_LABEL}</a></p>
+              <p className="group cursor-pointer flex items-start" onClick={() => { navigator.clipboard.writeText(process.env.NEXT_PUBLIC_CONTACT_ADDRESS || ''); alert('ที่อยู่ถูกคัดลอกแล้ว!'); }}>
                 <span className="font-bold text-neutral-300 inline-block w-20 shrink-0">Address:</span>
                 <span>
-                  <span className="group-hover:text-blue-400 transition-colors block leading-relaxed">8 Udomsuk 44 Bangna-Neua, Bangna, Bangkok 10260</span>
+                  <span className="group-hover:text-blue-400 transition-colors block leading-relaxed">{process.env.NEXT_PUBLIC_CONTACT_ADDRESS}</span>
                   <span className="text-[11px] text-neutral-600 opacity-0 group-hover:opacity-100 transition-opacity block mt-1">(Click to copy)</span>
                 </span>
               </p>

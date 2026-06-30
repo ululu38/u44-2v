@@ -242,7 +242,7 @@ export default function BannerAdminPage() {
                             <div className="w-24 h-12 rounded-lg overflow-hidden border border-gray-200 bg-white p-1 shrink-0">
                               {banner.media ? (
                                 <img 
-                                  src={(banner.media.urlThumb || banner.media.urlFull).startsWith('/') && !(banner.media.urlThumb || banner.media.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${banner.media.urlThumb || banner.media.urlFull}` : (banner.media.urlThumb || banner.media.urlFull)} 
+                                  src={(banner.media.urlThumb || banner.media.urlFull).startsWith('/') && !(banner.media.urlThumb || banner.media.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${banner.media.urlThumb || banner.media.urlFull}` : (banner.media.urlThumb || banner.media.urlFull)} 
                                   alt={banner.name} 
                                   className="w-full h-full object-cover rounded" 
                                 />

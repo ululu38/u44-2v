@@ -238,7 +238,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${item.urlMini || item.urlThumb}`}
+                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${item.urlMini || item.urlThumb}`}
                     alt=""
                     className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500
                       ${isSelected ? 'scale-105' : 'group-hover:scale-110'}`}
@@ -263,7 +263,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
                   {!isModal && !isSelected && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
                       <button
-                        onClick={(e) => { e.stopPropagation(); copyToClipboard(`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${item.urlFull}`, 'URL Copied!'); }}
+                        onClick={(e) => { e.stopPropagation(); copyToClipboard(`${process.env.NEXT_PUBLIC_IMAGE_URL}${item.urlFull}`, 'URL Copied!'); }}
                         className="bg-white/90 p-1.5 rounded-lg text-blue-600 hover:bg-white transition-all"
                       >
                         <span className="material-symbols-outlined text-sm">link</span>

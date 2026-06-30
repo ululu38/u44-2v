@@ -54,9 +54,9 @@ export function ShareActions({ postId, postTitle, views }: ShareActionsProps) {
   };
 
   const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(postTitle)}`,
-    line: `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`
+    facebook: `${process.env.NEXT_PUBLIC_SHARE_FACEBOOK || 'https://www.facebook.com/sharer/sharer.php'}?u=${encodeURIComponent(url)}`,
+    twitter: `${process.env.NEXT_PUBLIC_SHARE_TWITTER || 'https://twitter.com/intent/tweet'}?url=${encodeURIComponent(url)}&text=${encodeURIComponent(postTitle)}`,
+    line: `${process.env.NEXT_PUBLIC_SHARE_LINE || 'https://social-plugins.line.me/lineit/share'}?url=${encodeURIComponent(url)}`
   };
 
   return (

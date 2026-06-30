@@ -90,7 +90,7 @@ export default function FloatingBanner() {
           {banners.map((banner, index) => {
             let imageUrl = banner.media ? (banner.media.urlFull || banner.media.urlThumb) : "";
             if (imageUrl && imageUrl.startsWith('/') && !imageUrl.startsWith('/images/')) {
-              imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${imageUrl}`;
+              imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}${imageUrl}`;
             }
             
             return (

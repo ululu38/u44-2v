@@ -73,7 +73,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPostForMetadata(slug);
   if (!post) return { title: 'Post Not Found' };
 
-  const siteUrl = 'https://u44tech.com';
   const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
 
   return {

@@ -52,10 +52,10 @@ export default function Footer() {
               <div className="widget mt-10">
                 <h6 className="footer-heading">Social Media</h6>
                 <div className="flex gap-2">
-                  <a href="https://www.facebook.com/profile.php?id=61555566792786" className="facebook-btn btn-social">
+                  <a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} target="_blank" rel="noreferrer" className="facebook-btn btn-social">
                     <i className="fa-brands fa-facebook mr-2"></i> Facebook
                   </a>
-                  <a href="#" className="line-btn btn-social">
+                  <a href={process.env.NEXT_PUBLIC_CONTACT_LINE || '#'} target="_blank" rel="noreferrer" className="line-btn btn-social">
                     <i className="fa-brands fa-line mr-2"></i> Line
                   </a>
                 </div>
@@ -67,7 +67,7 @@ export default function Footer() {
                 <h5 className="footer-title">Facebook Fan-Page</h5>
                 <div className="overflow-hidden rounded">
                   <iframe
-                    src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D61555566792786&tabs=timeline&width=340&height=331&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=false&appId=1670230966608061"
+                    src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '')}&tabs=timeline&width=340&height=331&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=false&appId=1670230966608061`}
                     width="100%" height="331" style={{border:'none', overflow:'hidden'}} scrolling="no"
                     frameBorder="0" allowFullScreen={true}
                     allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
@@ -97,7 +97,7 @@ export default function Footer() {
               © 2024 U FORTY FOUR TECHNOLOGY SOLUTIONS CO., LTD.
             </div>
             <div className="w-full md:w-1/2 hidden md:flex justify-end gap-4">
-               <a href="https://www.facebook.com/profile.php?id=61555566792786" target="_blank" className="text-white hover:text-blue-400">
+               <a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} target="_blank" rel="noreferrer" className="text-white hover:text-blue-400">
                   <i className="fab fa-facebook-f"></i>
                </a>
             </div>

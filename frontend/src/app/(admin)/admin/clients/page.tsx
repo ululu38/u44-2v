@@ -232,7 +232,7 @@ export default function ClientsPage() {
                         <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200 bg-white p-1 shrink-0">
                           {c.logoMedia ? (
                             <CachedImage
-                              src={(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/') && !(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull}` : (c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull)}
+                              src={(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/') && !(c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull).startsWith('/images/') ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull}` : (c.logoMedia.urlMini || c.logoMedia.urlThumb || c.logoMedia.urlFull)}
                               alt=""
                               className="w-full h-full object-contain"
                               skeletonClassName="w-full h-full animate-pulse bg-gray-100"
@@ -304,7 +304,7 @@ export default function ClientsPage() {
                     {modalLogoUrl ? (
                       <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-white p-1 group flex items-center justify-center">
                         <img 
-                          src={modalLogoUrl.startsWith('/') && !modalLogoUrl.startsWith('/images/') ? `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${modalLogoUrl}` : modalLogoUrl} 
+                          src={modalLogoUrl.startsWith('/') && !modalLogoUrl.startsWith('/images/') ? `${process.env.NEXT_PUBLIC_IMAGE_URL}${modalLogoUrl}` : modalLogoUrl} 
                           alt="Logo Preview" 
                           className="w-full h-full object-contain" 
                         />

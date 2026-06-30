@@ -289,7 +289,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
       document.execCommand('defaultParagraphSeparator', false, 'p');
       (document as any).execCommand('styleWithCSS', false, true);
       // Fix relative image URLs so they load from the correct image server instead of localhost:3000
-      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || '';
+      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
       const fixedContent = (content || '<p><br></p>').replace(
         /src="(\/uploads\/[^"]+)"/gi,
         `src="${baseUrl}$1"`
@@ -316,7 +316,7 @@ const PostEditor: React.FC<PostEditorProps> = ({ content, onChange }) => {
       html = html.replace(/<font[^>]*>/gi, '').replace(/<\/font>/gi, '');
       
       // Strip base URL from images before saving to database (store as relative /uploads/...)
-      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || '';
+      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
       if (baseUrl) {
         const baseUrlRegex = new RegExp(`src="${baseUrl.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}(/uploads/[^"]+)"`, 'gi');
         html = html.replace(baseUrlRegex, 'src="$1"');

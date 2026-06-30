@@ -165,7 +165,7 @@ const CustomEditor: React.FC<CustomEditorProps> = ({ content, onChange, postTitl
     const newBlock: Block = {
       id: crypto.randomUUID(),
       type: 'image',
-      content: `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${media.urlFull}`,
+      content: `${process.env.NEXT_PUBLIC_IMAGE_URL}${media.urlFull}`,
       metadata: { width: '100%', textAlign: 'center', alt: postTitle || '' }
     };
     setBlocks([...blocks, newBlock]);

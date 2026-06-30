@@ -1,5 +1,5 @@
 
-const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080';
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL;
 
 /**
  * Ensures that all image URLs point to the dedicated image server (port 8080 by default).
@@ -7,9 +7,14 @@ const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:80
 export function getImageUrl(path?: string | null): string | null {
   if (!path) return null;
   
-  // Fix legacy absolute URLs saved in database that point to wrong localhost ports
-  if (path.startsWith('http://localhost:3000') || path.startsWith('http://localhost:4000')) {
-    path = path.replace(/^http:\/\/localhost:\d+/, '');
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  // Fix absolute URLs saved in database that point to other domains (API/Site)
+  if (apiUrl && path.startsWith(apiUrl)) {
+    path = path.substring(apiUrl.length);
+  } else if (siteUrl && path.startsWith(siteUrl)) {
+    path = path.substring(siteUrl.length);
   }
   
   if (path.startsWith('http')) return path;

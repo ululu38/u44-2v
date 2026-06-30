@@ -168,7 +168,7 @@ export default function Navbar() {
                   </div>
                   {recommendations.map((post, idx) => {
                     const thumb = post.thumbnailMedia?.urlThumb || post.thumbnailMedia?.urlFull;
-                    const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${thumb}`) : null;
+                    const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_IMAGE_URL}${thumb}`) : null;
                     return (
                       <Link 
                         key={post.postId} 
@@ -267,7 +267,7 @@ export default function Navbar() {
                   <div className="py-1">
                     {recommendations.map((post) => {
                       const thumb = post.thumbnailMedia?.urlThumb || post.thumbnailMedia?.urlFull;
-                      const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${thumb}`) : null;
+                      const fullThumb = thumb ? (thumb.startsWith("http") ? thumb : `${process.env.NEXT_PUBLIC_IMAGE_URL}${thumb}`) : null;
                       return (
                         <Link 
                           key={post.postId} 

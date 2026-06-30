@@ -272,7 +272,7 @@ export default function PostsPage() {
                     <div className="flex items-center gap-3">
                       {post.thumbnailMedia ? (
                         <CachedImage 
-                          src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:8080'}${post.thumbnailMedia.urlMini || post.thumbnailMedia.urlThumb || post.thumbnailMedia.urlFull}`} 
+                          src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post.thumbnailMedia.urlMini || post.thumbnailMedia.urlThumb || post.thumbnailMedia.urlFull}`} 
                           alt="" 
                           className="w-12 h-12 rounded object-cover border border-gray-200 shrink-0" 
                           skeletonClassName="w-12 h-12 rounded animate-pulse bg-gray-100"

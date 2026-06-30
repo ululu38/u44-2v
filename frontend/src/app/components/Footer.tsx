@@ -58,7 +58,7 @@ export default function Footer() {
                 <h6 className="text-xs font-bold text-neutral-400 tracking-wider uppercase mb-2">Social Media</h6>
                 <div className="flex gap-3">
                   <a 
-                    href="https://www.facebook.com/profile.php?id=61555566792786" 
+                    href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} 
                     target="_blank" 
                     rel="noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded transition-colors"
@@ -66,7 +66,9 @@ export default function Footer() {
                     Facebook
                   </a>
                   <a 
-                    href="#" 
+                    href={process.env.NEXT_PUBLIC_CONTACT_LINE || '#'} 
+                    target="_blank"
+                    rel="noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-neutral-750 hover:bg-neutral-650 text-white text-xs font-bold rounded transition-colors"
                   >
                     Line
@@ -81,7 +83,7 @@ export default function Footer() {
               <div className="overflow-hidden rounded border border-neutral-800 min-h-[300px] bg-neutral-900/50 flex items-center justify-center">
                 {loadIframes ? (
                   <iframe
-                    src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D61555566792786&tabs=timeline&width=340&height=331&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=false&appId=1670230966608061"
+                    src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '')}&tabs=timeline&width=340&height=331&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=false&appId=1670230966608061`}
                     width="100%" 
                     height="300" 
                     style={{ border: 'none', overflow: 'hidden' }} 
@@ -134,7 +136,7 @@ export default function Footer() {
             </div>
             <div>
                <a 
-                 href="https://www.facebook.com/profile.php?id=61555566792786" 
+                 href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} 
                  target="_blank" 
                  rel="noreferrer"
                  className="text-neutral-400 hover:text-neutral-200 transition-colors"
