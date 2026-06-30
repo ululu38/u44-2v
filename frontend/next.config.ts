@@ -14,9 +14,6 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_CONTACT_LINE: process.env.NEXT_PUBLIC_CONTACT_LINE || 'https://line.me/R/ti/p/@u44tech',
     NEXT_PUBLIC_CONTACT_LINE_LABEL: process.env.NEXT_PUBLIC_CONTACT_LINE_LABEL || '@u44tech',
     NEXT_PUBLIC_CONTACT_ADDRESS: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || '8 Udomsuk 44 Bangna-Neua, Bangna, Bangkok 10260',
-    NEXT_PUBLIC_SHARE_FACEBOOK: process.env.NEXT_PUBLIC_SHARE_FACEBOOK || 'https://www.facebook.com/sharer/sharer.php',
-    NEXT_PUBLIC_SHARE_TWITTER: process.env.NEXT_PUBLIC_SHARE_TWITTER || 'https://twitter.com/intent/tweet',
-    NEXT_PUBLIC_SHARE_LINE: process.env.NEXT_PUBLIC_SHARE_LINE || 'https://social-plugins.line.me/lineit/share',
   },
   cacheComponents: true, // Preserve component state across navigations (Next.js 16+)
   images: {
