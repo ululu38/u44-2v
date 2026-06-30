@@ -97,7 +97,7 @@ export default function Footer() {
               © 2024 U FORTY FOUR TECHNOLOGY SOLUTIONS CO., LTD.
             </div>
             <div className="w-full md:w-1/2 hidden md:flex justify-end gap-4">
-               <a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} target="_blank" rel="noreferrer" className="text-white hover:text-blue-400">
+               <a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} target="_blank" rel="noreferrer" className="text-white hover:text-blue-400" aria-label="U FORTY FOUR Facebook Page">
                   <i className="fab fa-facebook-f"></i>
                </a>
             </div>
