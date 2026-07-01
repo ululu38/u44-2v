@@ -58,6 +58,13 @@ export class PostController {
     return this.postService.findByIdentifier(identifier, isLogged);
   }
 
+  @Post(':id/view')
+  @ApiOperation({ summary: 'Increment post views' })
+  @ApiResponse({ status: 200, description: 'View count incremented' })
+  async incrementView(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.incrementView(id);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.EMPLOYEE)

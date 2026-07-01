@@ -1,71 +1,40 @@
-# 🚀 U44 Technology Solutions V2 - Guide
-
-โปรเจกต์เวอร์ชัน 2 พัฒนาด้วย Clean Architecture โดยใช้ Stack: **Next.js, NestJS, PostgreSQL และ Drizzle ORM**
+# 🚀 U44 Technology Solutions V2 - Deployment & Setup Guide
 
 ---
 
-## 🛠️ โหมดการรัน (Running Modes)
+## 1. 🌐 วิธีการ Deploy ระบบแบบ Full (Docker Compose)
 
-### 1. รันด้วย Docker Compose (แนะนำ)
-รันทุกอย่างในคำสั่งเดียว:
+รันทั้งระบบ (Database, Backend, Frontend และ Nginx) ในคำสั่งเดียวผ่าน Docker:
+
 ```bash
-docker compose --profile infra --profile backend --profile frontend up -d --build
+docker compose --profile full up -d --build
 ```
 
-### 2. รันแยกส่วนเพื่อการพัฒนา (Manual Setup)
+> **หมายเหตุ:**
+>
+> - ระบบจะโหลดตัวแปรแวดล้อม (Environment Variables) จากไฟล์ `.env` ที่ root โดยอัตโนมัติ
+> - เมื่อรันเสร็จสิ้น สามารถเข้าใช้งานหน้าเว็บได้ที่: [http://localhost:3000](http://localhost:3000) หรือผ่าน Nginx ที่พอร์ต [http://localhost:8080](http://localhost:8080)
 
-#### **Step 1: รันระบบพื้นฐาน (Infrastructure)**
-รันเฉพาะ PostgreSQL:
+---
+
+## 2. 👤 วิธีการสร้างผู้ใช้งาน (Create User / Admin)
+
+คุณสามารถสร้างผู้ใช้งานใหม่ (Admin หรือ Employee) ได้ 2 วิธี:
+
+### วิธีที่ 1: สร้างผ่าน Interactive CLI (แนะนำ)
+
+ระบบมีเครื่องมือสำหรับสร้าง User แบบโต้ตอบ ให้กำหนดชื่อผู้ใช้งาน รหัสผ่าน และเลือกสิทธิ์ได้ทันที:
+
+#### **กรณีระบบรันอยู่ใน Docker:**
+
 ```bash
-docker compose --profile infra up -d
+docker exec -it u44tech-backend npm run create-user
 ```
 
-#### **Step 2: ตั้งค่า Backend (NestJS)**
-1. เข้าไปที่โฟลเดอร์: `cd backend`
-2. ติดตั้ง Dependencies: `npm install`
-3. สร้างไฟล์ `.env` และตั้งค่า (ดูตัวอย่างในหัวข้อถัดไป)
-4. **เตรียมฐานข้อมูล (สำคัญ):**
-   - รันตาราง: `npm run migrate`
-   - สร้าง Admin คนแรก: `npm run seed`
-5. เริ่มรัน: `npm run start:dev`
-6. เข้าดู API Doc: [http://localhost:4000/api](http://localhost:4000/api) (Swagger)
+#### **กรณีรันในเครื่อง Local (Manual):**
 
-#### **Step 3: ตั้งค่า Frontend (Next.js)**
-1. เข้าไปที่โฟลเดอร์: `cd frontend`
-2. ติดตั้ง Dependencies: `npm install`
-3. สร้างไฟล์ `.env.local` และใส่ค่า:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:4000
-   ```
-4. เริ่มรัน: `npm run dev`
-5. เข้าชมเว็บไซต์: [http://localhost:3000](http://localhost:3000)
+```bash
+cd backend && npm run create-user
+```
 
 ---
-
-## 🔑 ข้อมูลสำคัญ (Important Credentials)
-
-### **Admin Panel (ระบบหลังบ้าน)**
-- **URL:** [http://localhost:3000/login](http://localhost:3000/login)
-- **Username:** `admin` (ค่าเริ่มต้น)
-- **Password:** `password123` (ค่าเริ่มต้น)
-
-### **Database (PostgreSQL)**
-- **Host:** `localhost:5432`
-- **DB Name:** `u44tech_v2`
-- **User:** `u44admin`
-- **Pass:** `u44password`
-
----
-
-## 🏗️ โครงสร้างสถาปัตยกรรม (Architecture)
-โปรเจกต์นี้ใช้ **Clean Architecture** แบ่งเป็น 3 Layer หลักใน Backend:
-1.  **Domain**: เก็บกฎทางธุรกิจและ Entities (Database Schema อยู่ที่นี่)
-2.  **Infrastructure**: การเชื่อมต่อภายนอก (DB Service, Mail, Config, Auth Strategy)
-3.  **Interface**: จุดรับส่งข้อมูล (Controllers, DTOs)
-
----
-
-## 💡 คำแนะนำการใช้งาน
-- **Swagger**: ใช้สำหรับทดสอบ API ทุกตัวในระบบหลังบ้าน
-- **Drizzle Kit**: หากมีการแก้ไขไฟล์ `src/domain/entities/schema.ts` ให้รัน `npx drizzle-kit push` เพื่ออัปเดตฐานข้อมูลทันที
-- **CSS Separation**: หน้าเว็บหลักใช้ `globals.css` (Dark Theme) ส่วนหน้า Admin ใช้ `admin.css` (Light Theme) แยกจากกันอย่างชัดเจน

@@ -65,12 +65,22 @@ async function getPost(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostForMetadata(slug);
-  if (!post || post.status !== 1) return { title: 'Post Not Found' };
+  if (!post || post.status !== 1) return { 
+    title: 'Post Not Found', 
+    description: 'U FORTY FOUR Technology Solutions - Post not found'
+  };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ;
   const imageUrl = (post.thumbnailMedia && getImageUrl(post.thumbnailMedia.urlFull)) || `${siteUrl}/default-share.jpg`;
   
-  const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
+  const rawText = post.contentText || post.content || '';
+  let cleanDesc = rawText
+    .replace(/<[^>]*>/g, '')          // strip HTML tags
+    .replace(/&[a-z]+;/gi, ' ')       // strip HTML entities
+    .replace(/\s+/g, ' ')             // collapse whitespace
+    .substring(0, 160)
+    .trim();
+  if (!cleanDesc) cleanDesc = `${post.title} - U FORTY FOUR Technology Solutions` || 'U FORTY FOUR Technology Solutions';
 
   return {
     title: post.title,
@@ -130,7 +140,8 @@ async function PostContent({ params }: { params: Promise<{ slug: string }> }) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://u44.co.th';
   const imageUrl = (post.thumbnailMedia && getImageUrl(post.thumbnailMedia.urlFull)) || '';
-  const cleanDesc = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : '';
+  let cleanDesc = (post.contentText || post.content || '').replace(/<[^>]*>/g, '').substring(0, 160).trim();
+  if (!cleanDesc) cleanDesc = post.title || 'U FORTY FOUR Technology Solutions';
 
   // JSON-LD
   const jsonLd = {

@@ -196,7 +196,7 @@ export function SearchBar({
                       {/* Tiny Thumbnail */}
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-neutral-800 border border-neutral-700/50 shrink-0 flex items-center justify-center">
                         {thumb ? (
-                          <img src={thumb} alt="" className="w-full h-full object-cover" />
+                          <img src={thumb} alt={post.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-neutral-600">
                             <span className="material-icons-outlined text-sm">image</span>

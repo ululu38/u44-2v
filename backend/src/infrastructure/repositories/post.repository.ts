@@ -27,6 +27,12 @@ export class PostRepository {
     return result[0];
   }
 
+  async incrementView(postId: number) {
+    await this.drizzle.db.update(posts)
+      .set({ views: sql`${posts.views} + 1` })
+      .where(eq(posts.postId, postId));
+  }
+
   async findById(postId: number) {
     return this.drizzle.db.query.posts.findFirst({
       where: eq(posts.postId, postId),

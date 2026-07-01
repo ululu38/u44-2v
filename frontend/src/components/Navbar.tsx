@@ -182,7 +182,7 @@ export default function Navbar() {
                       >
                         <div className="flex-shrink-0 rounded overflow-hidden bg-white/5" style={{ width: 44, height: 44 }}>
                           {fullThumb ? (
-                            <img src={fullThumb} alt="" className="w-full h-full object-cover" />
+                            <img src={fullThumb} alt={post.title} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full d-flex align-items-center justify-center text-gray-600">
                               <span className="material-icons text-lg">image</span>
@@ -283,7 +283,7 @@ export default function Navbar() {
                         >
                           <div className="flex-shrink-0 rounded overflow-hidden bg-gray-100" style={{ width: 36, height: 36 }}>
                             {fullThumb ? (
-                              <img src={fullThumb} alt="" className="w-full h-full object-cover" />
+                              <img src={fullThumb} alt={post.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full d-flex align-items-center justify-center text-gray-400">
                                 <span className="material-icons text-sm">image</span>

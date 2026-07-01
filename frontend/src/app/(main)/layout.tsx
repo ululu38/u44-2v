@@ -23,10 +23,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
   title: "U FORTY FOUR Technology Solutions",
   description: "บริษัท ยู โฟร์ตี้โฟร์ เทคโนโลยี โซลูชั่นส์ จำกัด ให้บริการจัดจำหน่าย ออกแบบ ติดตั้ง และดูแลระบบเทคโนโลยี IT ทั้งฮาร์ดแวร์และซอฟต์แวร์",
-  icons: {
-    icon: '/images/U44-icon-133x123.png',
-    apple: '/images/U44-icon-133x123.png',
-  },
   openGraph: {
     images: ['/images/U44-icon-133x123.png'],
   },

@@ -58,7 +58,7 @@ export default function Footer() {
                 <h6 className="text-xs font-bold text-neutral-400 tracking-wider uppercase mb-2">Social Media</h6>
                 <div className="flex gap-3">
                   <a 
-                    href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || 'https://www.facebook.com/profile.php?id=61555566792786'} 
+                    href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '/contactus'} 
                     target="_blank" 
                     rel="noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold rounded transition-colors"
@@ -66,7 +66,7 @@ export default function Footer() {
                     Facebook
                   </a>
                   <a 
-                    href={process.env.NEXT_PUBLIC_CONTACT_LINE || 'https://line.me/R/ti/p/@u44tech'} 
+                    href={process.env.NEXT_PUBLIC_CONTACT_LINE || '/contactus'} 
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-neutral-750 hover:bg-neutral-650 text-white text-xs font-bold rounded transition-colors"
@@ -136,7 +136,7 @@ export default function Footer() {
             </div>
             <div>
                <a 
-                 href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} 
+                 href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '/contactus'} 
                  target="_blank" 
                  rel="noreferrer"
                  className="text-neutral-400 hover:text-neutral-200 transition-colors"

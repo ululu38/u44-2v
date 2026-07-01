@@ -376,4 +376,9 @@ export class PostService {
     if (!post) throw new NotFoundException('Post not found');
     return post;
   }
+
+  async incrementView(id: number) {
+    await this.postRepo.incrementView(id);
+    return { success: true };
+  }
 }

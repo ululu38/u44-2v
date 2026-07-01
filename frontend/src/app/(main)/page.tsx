@@ -184,7 +184,7 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-black/75 z-10" />
                 <CachedImage 
                   src={slide.bg} 
-                  alt={slide.tag} 
+                  alt={slide.title || slide.tag} 
                   className="w-full h-full object-cover brightness-90"
                   priority={i === 0}
                 />

@@ -52,10 +52,10 @@ export default function Footer() {
               <div className="widget mt-10">
                 <h6 className="footer-heading">Social Media</h6>
                 <div className="flex gap-2">
-                  <a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || 'https://www.facebook.com/profile.php?id=61555566792786'} target="_blank" rel="noreferrer" className="facebook-btn btn-social">
+                  <a href={process.env.NEXT_PUBLIC_CONTACT_FACEBOOK || '#'} target="_blank" rel="noreferrer" className="facebook-btn btn-social">
                     <i className="fa-brands fa-facebook mr-2"></i> Facebook
                   </a>
-                  <a href={process.env.NEXT_PUBLIC_CONTACT_LINE || 'https://line.me/R/ti/p/@u44tech'} target="_blank" rel="noreferrer" className="line-btn btn-social">
+                  <a href={process.env.NEXT_PUBLIC_CONTACT_LINE || '#'} target="_blank" rel="noreferrer" className="line-btn btn-social">
                     <i className="fa-brands fa-line mr-2"></i> Line
                   </a>
                 </div>
